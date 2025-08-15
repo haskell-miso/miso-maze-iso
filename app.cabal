@@ -1,0 +1,88 @@
+cabal-version:      3.0
+name:               miso-maze
+version:            0.1.0.0
+build-type:         Simple
+
+executable app
+  hs-source-dirs:
+    src
+  main-is:
+    client.hs
+  other-modules:
+    App.Action
+    App.Component
+    App.Model
+    App.Routes
+    App.Update
+    App.View
+    Domain.Hero
+    Server.Api
+  build-depends: 
+    aeson,
+    base,
+    miso,
+    network-uri,
+    servant
+  ghc-options:
+    -Wall -O2 -no-hs-main -optl-mexec-model=reactor "-optl-Wl,--export=hs_start"
+  default-language:
+    GHC2024
+  default-extensions:
+    TemplateHaskell
+
+executable server
+  hs-source-dirs:
+    src
+  main-is:
+    server.hs
+  other-modules:
+    App.Action
+    App.Component
+    App.Model
+    App.Routes
+    App.Update
+    App.View
+    Domain.Hero
+    Server.Api
+  build-depends: 
+    aeson,
+    base,
+    http-types,
+    miso,
+    network-uri,
+    servant,
+    servant-server,
+    wai,
+    wai-app-static,
+    wai-extra,
+    warp
+  ghc-options:
+    -Wall -O2
+  default-language:
+    GHC2024
+  default-extensions:
+    TemplateHaskell
+
+test-suite spec
+  main-is:
+    spec.hs
+  hs-source-dirs:
+    src
+  type:
+    exitcode-stdio-1.0
+  build-depends:
+    base,
+    hspec,
+    miso,
+    mtl,
+    vector
+  other-modules:
+    Tictactoe.Game
+    Tictactoe.GameSpec
+  default-language:
+    GHC2024
+  default-extensions:
+    CPP TemplateHaskell
+  ghc-options:
+    -Wall -O2
+
