@@ -63,7 +63,7 @@ executable server
   default-extensions:
     TemplateHaskell
 
-test-suite spec
+test-suite test
   main-is:
     spec.hs
   hs-source-dirs:
@@ -73,12 +73,10 @@ test-suite spec
   build-depends:
     base,
     hspec,
-    miso,
-    mtl,
     vector
   other-modules:
-    Tictactoe.Game
-    Tictactoe.GameSpec
+    Domain.Game
+    Domain.GameSpec
   default-language:
     GHC2024
   default-extensions:

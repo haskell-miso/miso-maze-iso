@@ -11,14 +11,19 @@ build.sh
 
 ## Development
 
+- frontend:
+
 ```
-# build frontend:
-nix develop .#wasm --experimental-features "nix-command flakes" --command bash -c "make"
+nix develop .#wasm
+make
+```
 
-# build backend:
-nix develop .#default --experimental-features "nix-command flakes" --command bash -c "cabal build server"
+- backend:
 
-# run tests:
-nix develop .#default --experimental-features "nix-command flakes" --command bash -c "cabal test"
+```
+nix develop .#default 
+cabal update            # update cabal
+cabal test              # build and run tests
+cabal run server        # build and run the server
 ```
 
