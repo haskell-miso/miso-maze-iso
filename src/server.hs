@@ -32,9 +32,7 @@ heroes =
 -- server routing
 -------------------------------------------------------------------------------
 
-type RouteHome a = a
-type Routes a = RouteHome a
-type ClientRoutes = Routes (Get '[HTML] Page)
+type ClientRoutes = Get '[HTML] Page
 
 type ServerApi
   =    PublicApi

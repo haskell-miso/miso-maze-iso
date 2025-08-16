@@ -11,15 +11,18 @@ executable app
   other-modules:
     App.Component
     App.Model
+    Domain.Game
     Domain.Hero
   build-depends: 
     aeson,
     base,
+    containers,
     miso,
     network-uri,
-    servant
+    servant,
+    vector
   ghc-options:
-    -Wall -O2 -no-hs-main -optl-mexec-model=reactor "-optl-Wl,--export=hs_start"
+    -Wall -O2 -no-hs-main -optl-mexec-model=reactor "-optl-Wl,--export=hs_start" -ddump-splices
   default-language:
     GHC2024
   default-extensions:
@@ -33,22 +36,25 @@ executable server
   other-modules:
     App.Component
     App.Model
+    Domain.Game
     Domain.Hero
     Server.Api
   build-depends: 
     aeson,
     base,
+    containers,
     http-types,
     miso,
     network-uri,
     servant,
     servant-server,
+    vector,
     wai,
     wai-app-static,
     wai-extra,
     warp
   ghc-options:
-    -Wall -O2
+    -Wall -O2 -ddump-splices
   default-language:
     GHC2024
   default-extensions:
