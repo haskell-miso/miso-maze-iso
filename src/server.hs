@@ -13,11 +13,10 @@ import Network.Wai.Middleware.RequestLogger (logStdout)
 import Servant
 import System.Environment (lookupEnv)
 
-import App.Component (HeroesComponent, heroesComponent)
-import App.Model (Model)
-import App.Routes (Routes, uriHome, uriAbout, uri404)
-import Domain.Hero (Hero(..))
-import Server.Api (PublicApi, mkStaticUri)
+import App.Component 
+import App.Model
+import Domain.Hero
+import Server.Api
 
 -------------------------------------------------------------------------------
 -- server data
@@ -33,32 +32,31 @@ heroes =
 -- server routing
 -------------------------------------------------------------------------------
 
+type RouteHome a = a
+type Routes a = RouteHome a
+type ClientRoutes = Routes (Get '[HTML] Page)
+
+type ServerApi
+  =    PublicApi
+  :<|> ClientRoutes
+  :<|> Raw
+
+newtype Page = Page AppComponent
+
 handlePublicApi :: Server PublicApi
 handlePublicApi 
   =    serveDirectoryWith (defaultWebAppSettings "public")
   :<|> pure heroes
 
-type ClientRoutesServer = Routes (Get '[HTML] Page)
-
-type ServerApi
-  =    PublicApi
-  :<|> ClientRoutesServer
-  :<|> Raw
-
-newtype Page = Page HeroesComponent
-
-handleClientRoutes :: Server ClientRoutesServer
+handleClientRoutes :: Server ClientRoutes
 handleClientRoutes 
-  =    pure (Page $ heroesComponent uriHome)
-  :<|> pure (Page $ heroesComponent uriAbout)
-  :<|> pure (Page $ heroesComponent uri404)
+  = pure (Page appComponent)
 
 handle404 :: Application
 handle404 _ respond' =
   respond' $
     responseLBS status404 [("Content-Type", "text/html")] $
-      toHtml $
-        Page (heroesComponent uri404)
+      toHtml [ p_ [] [ "page not found" ] ]
 
 -------------------------------------------------------------------------------
 -- server rendering
@@ -71,7 +69,7 @@ instance ToHtml Page where
       , html_
         [ lang_ "en" ]
         [ head_ 
-          [ title_ "Heroes" ]
+          [ title_ "miso-maze" ]
           [ meta_ [ charset_ "utf-8" ]
           , meta_ [ name_ "viewport" , content_ "width=device-width, initial-scale=1" ]
           , link_
@@ -80,8 +78,7 @@ instance ToHtml Page where
             , type_ "image/x-icon"
             ]
           , script_ [ src_ (mkStaticUri "index.js"), type_ "module" ] ""
-          , body_ [] [toView @Model x]
-          ]
+          , body_ [] [ toView @Model x] ]
         ]
       ]
 

@@ -1,10 +1,10 @@
 
 import Miso (miso, run)
 
-import App.Component (heroesComponent)
+import App.Component (appComponent)
 
 foreign export javascript "hs_start" main :: IO ()
 
 main :: IO ()
-main = run (miso heroesComponent)
+main = run (miso $ const appComponent)
 

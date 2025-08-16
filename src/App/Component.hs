@@ -1,37 +1,84 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module App.Component where
 
-import Data.Proxy
-import Servant.API
 import Miso
+import Miso.Lens
 
-import App.Action (Action(..))
-import App.Model (Model(..), mkModel)
-import App.Routes (ClientRoutes)
-import App.Update (updateModel)
-import App.View (viewHome, viewAbout, view404)
+import App.Model 
+import Domain.Hero
 
-type HeroesComponent = App Model Action
+-------------------------------------------------------------------------------
+-- Action
+-------------------------------------------------------------------------------
 
-heroesComponent :: URI -> HeroesComponent
-heroesComponent uri =
-  (componentApp uri)
-    { subs = [ uriSub ActionHandleUri ]
-    , logLevel = DebugAll
-    }
+data Action
+    = ActionPopHeroes
+    | ActionError MisoString
+    | ActionFetchFail
+    | ActionFetchHeroes
+    | ActionSetHeroes [Hero]
+    deriving (Eq)
 
-componentApp :: URI -> App Model Action
-componentApp currentUri = component initialModel updateModel viewModel
+-------------------------------------------------------------------------------
+-- Update
+-------------------------------------------------------------------------------
+
+updateModel :: Action -> Transition Model Action
+
+updateModel ActionPopHeroes = do
+  modelHeroes %= \case
+    [] -> []
+    (_:xs) -> xs
+  modelError .= ""
+
+updateModel (ActionError str) =
+  modelError .= str
+
+updateModel ActionFetchFail =
+  fetch "fail" "GET" Nothing [] ActionSetHeroes ActionError
+
+updateModel ActionFetchHeroes =
+  fetch "./heroes" "GET" Nothing [] ActionSetHeroes ActionError
+
+updateModel (ActionSetHeroes heroes)  = do
+  modelHeroes .= heroes
+  modelError .= ""
+
+-------------------------------------------------------------------------------
+-- View
+-------------------------------------------------------------------------------
+
+viewModel :: Model -> View Model Action
+viewModel Model{..} =
+  div_ 
+    []
+    [ h1_ [] [ "miso-maze" ]
+    , p_ []
+        [ button_ [ onClick ActionFetchFail ] [ "fetch fail" ]
+        , button_ [ onClick ActionFetchHeroes ] [ "fetch heroes" ]
+        , button_ [ onClick ActionPopHeroes ] [ "pop heroes" ]
+        ]
+    , ul_ [] (map fmtHero _modelHeroes)
+    , p_ [] [ text _modelError ]
+    ]
+
   where
-    initialModel = mkModel currentUri
+    fmtHero Hero{..} =
+      li_ []
+        [ text _heroName
+        ]
 
-    viewModel m =
-        case route (Proxy @ClientRoutes) clientHandlers _modelUri m of
-          Left _ -> view404 m
-          Right v -> v
+-------------------------------------------------------------------------------
+-- Component
+-------------------------------------------------------------------------------
 
-    clientHandlers
-      =    viewHome
-      :<|> viewAbout
-      :<|> view404
+type AppComponent = App Model Action
+
+appComponent :: AppComponent
+appComponent = do
+  let initialModel = mkModel
+  (component initialModel updateModel viewModel)
+    { logLevel = DebugAll }
 

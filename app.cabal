@@ -9,14 +9,9 @@ executable app
   main-is:
     client.hs
   other-modules:
-    App.Action
     App.Component
     App.Model
-    App.Routes
-    App.Update
-    App.View
     Domain.Hero
-    Server.Api
   build-depends: 
     aeson,
     base,
@@ -36,12 +31,8 @@ executable server
   main-is:
     server.hs
   other-modules:
-    App.Action
     App.Component
     App.Model
-    App.Routes
-    App.Update
-    App.View
     Domain.Hero
     Server.Api
   build-depends: 

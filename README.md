@@ -3,10 +3,12 @@
 Isomorphic web app using [Miso](https://github.com/dmjio/miso) and WebSockets:
 move inside the maze and meet other players.
 
-## Build and deploy in a `output` folder:
+## Build and run:
 
 ```
 build.sh
+cd output
+./server
 ```
 
 ## Development
