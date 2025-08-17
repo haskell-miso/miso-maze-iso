@@ -48,6 +48,7 @@ executable server
     network-uri,
     servant,
     servant-server,
+    stm,
     vector,
     wai,
     wai-app-static,

@@ -12,12 +12,13 @@ import Domain.Game
 data Model = Model
   { _modelHeroes :: [Hero]
   , _modelError :: MisoString
-  -- , _modelInfos :: Infos
-  -- , _modelName :: MisoString
+  , _modelName :: MisoString
+  , _modelInfos :: Infos
+  , _modelBoard :: Board
   } deriving (Eq)
 
 makeLenses ''Model
 
 mkModel :: Model
-mkModel = Model [] " "    -- warning: an empty would cause hydration to fail
+mkModel = Model [] " " "myname" mkInfos mkBoard
 
