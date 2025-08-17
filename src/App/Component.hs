@@ -10,7 +10,6 @@ import Miso.Lens
 import Miso.Style qualified as Style
 
 import App.Model 
-import Domain.Hero
 import Domain.Game
 
 -------------------------------------------------------------------------------
@@ -31,11 +30,7 @@ otherColor        = Style.Hex "666666"
 -------------------------------------------------------------------------------
 
 data Action
-    = ActionPopHeroes
-    | ActionError MisoString
-    | ActionFetchFail
-    | ActionFetchHeroes
-    | ActionSetHeroes [Hero]
+    = ActionError MisoString
     deriving (Eq)
 
 -------------------------------------------------------------------------------
@@ -44,24 +39,8 @@ data Action
 
 updateModel :: Action -> Transition Model Action
 
-updateModel ActionPopHeroes = do
-  modelHeroes %= \case
-    [] -> []
-    (_:xs) -> xs
-  modelError .= ""
-
 updateModel (ActionError str) =
   modelError .= str
-
-updateModel ActionFetchFail =
-  fetch "fail" "GET" Nothing [] ActionSetHeroes ActionError
-
-updateModel ActionFetchHeroes =
-  fetch "./heroes" "GET" Nothing [] ActionSetHeroes ActionError
-
-updateModel (ActionSetHeroes heroes)  = do
-  modelHeroes .= heroes
-  modelError .= ""
 
 -------------------------------------------------------------------------------
 -- View
@@ -73,11 +52,8 @@ viewModel m@Model{..} =
     []
     [ h1_ [] [ "miso-maze" ]
     , p_ []
-        [ button_ [ onClick ActionFetchFail ] [ "fetch fail" ]
-        , button_ [ onClick ActionFetchHeroes ] [ "fetch heroes" ]
-        , button_ [ onClick ActionPopHeroes ] [ "pop heroes" ]
+        [ button_ [ onClick (ActionError "error")  ] [ "launch error" ]
         ]
-    , ul_ [] (map fmtHero _modelHeroes)
     , p_ [] [ text _modelError ]
     , canvas 
         [ width_ (ms $ show w)
@@ -91,11 +67,6 @@ viewModel m@Model{..} =
   where
     w = fromIntegral $ cellSize * m^.modelBoard^.boardNj
     h = fromIntegral $ cellSize * m^.modelBoard^.boardNi
-
-    fmtHero Hero{..} =
-      li_ []
-        [ text _heroName
-        ]
 
 initCanvas :: DOMRef -> Canvas ()
 initCanvas _ = pure ()

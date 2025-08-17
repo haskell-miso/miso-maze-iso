@@ -15,18 +15,12 @@ import System.Environment (lookupEnv)
 
 import App.Component 
 import App.Model
-import Domain.Hero
+import Domain.Game
 import Server.Api
 
 -------------------------------------------------------------------------------
 -- server data
 -------------------------------------------------------------------------------
-
-heroes :: [Hero]
-heroes = 
-    [ Hero "Scooby Doo" "scoobydoo.png"
-    , Hero "Sponge Bob" "spongebob.png"
-    ]
 
 -------------------------------------------------------------------------------
 -- server routing
@@ -44,7 +38,6 @@ newtype Page = Page AppComponent
 handlePublicApi :: Server PublicApi
 handlePublicApi 
   =    serveDirectoryWith (defaultWebAppSettings "public")
-  :<|> pure heroes
 
 handleClientRoutes :: Server ClientRoutes
 handleClientRoutes 

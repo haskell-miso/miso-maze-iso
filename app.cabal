@@ -12,7 +12,6 @@ executable app
     App.Component
     App.Model
     Domain.Game
-    Domain.Hero
   build-depends: 
     aeson,
     base,
@@ -37,7 +36,6 @@ executable server
     App.Component
     App.Model
     Domain.Game
-    Domain.Hero
     Server.Api
   build-depends: 
     aeson,
