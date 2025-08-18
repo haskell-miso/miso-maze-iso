@@ -11,7 +11,11 @@ executable app
   other-modules:
     App.Component
     App.Model
-    Domain.Game
+    Game.Board
+    Game.Game
+    Game.Infos
+    Game.Position
+    Network.Protocol
   build-depends: 
     aeson,
     base,
@@ -35,7 +39,11 @@ executable server
   other-modules:
     App.Component
     App.Model
-    Domain.Game
+    Game.Board
+    Game.Game
+    Game.Infos
+    Game.Position
+    Network.Protocol
     Server.Api
   build-depends: 
     aeson,
@@ -71,8 +79,8 @@ test-suite test
     hspec,
     vector
   other-modules:
-    Domain.Game
-    Domain.GameSpec
+    Game.Game
+    Game.GameSpec
   default-language:
     GHC2024
   default-extensions:

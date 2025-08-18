@@ -15,7 +15,7 @@ import System.Environment (lookupEnv)
 
 import App.Component 
 import App.Model
-import Domain.Game
+import Game.Game
 import Server.Api
 
 -------------------------------------------------------------------------------

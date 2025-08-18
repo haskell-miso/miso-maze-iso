@@ -6,7 +6,10 @@ import Miso
 import Miso.Lens
 import Miso.Lens.TH
 
-import Domain.Game
+import Game.Board
+import Game.Game
+import Game.Infos
+import Game.Position
 
 data Model = Model
   { _modelError :: MisoString
@@ -18,5 +21,8 @@ data Model = Model
 makeLenses ''Model
 
 mkModel :: Model
-mkModel = Model " " "myname" mkInfos mkBoard
+mkModel = Model " " "myname" infos board    -- TODO
+  where
+    infos = mkInfos [] (Position 1 1) 0
+    board = mkBoard
 

@@ -10,7 +10,8 @@ import Miso.Lens
 import Miso.Style qualified as Style
 
 import App.Model 
-import Domain.Game
+import Game.Board
+import Game.Game
 
 -------------------------------------------------------------------------------
 -- params

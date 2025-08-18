@@ -1,9 +1,9 @@
 
-module Domain.GameSpec (spec) where
+module Game.GameSpec (spec) where
 
 import Test.Hspec
 
-import Domain.Game
+import Game.Game
 
 spec :: Spec
 spec = do
