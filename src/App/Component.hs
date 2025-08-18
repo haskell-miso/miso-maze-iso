@@ -3,6 +3,7 @@
 
 module App.Component where
 
+import Control.Monad
 import Miso
 import Miso.Canvas (Canvas, canvas)
 import Miso.Canvas qualified as Canvas 
@@ -32,6 +33,7 @@ otherColor        = Style.Hex "666666"
 
 data Action
     = ActionError MisoString
+    | ActionBoard MisoString
     deriving (Eq)
 
 -------------------------------------------------------------------------------
@@ -42,6 +44,10 @@ updateModel :: Action -> Transition Model Action
 
 updateModel (ActionError str) =
   modelError .= str
+
+updateModel (ActionBoard filename) =
+  -- fetch (mkStaticUri filename)
+  pure () -- TODO
 
 -------------------------------------------------------------------------------
 -- View
@@ -56,18 +62,23 @@ viewModel m@Model{..} =
         [ button_ [ onClick (ActionError "error")  ] [ "launch error" ]
         ]
     , p_ [] [ text _modelError ]
-    , canvas 
-        [ width_ (ms $ show w)
-        , height_ (ms $ show h)
-        , Style.style_  [Style.border "2px solid black"]
-        ]
-      initCanvas
-      (drawCanvas w h m)
+    , viewBoard _modelBoard
     ]
 
   where
-    w = fromIntegral $ cellSize * m^.modelBoard^.boardNj
-    h = fromIntegral $ cellSize * m^.modelBoard^.boardNi
+    viewBoard = \case
+      Nothing -> span_ [] []
+      Just Board{..} ->
+        let 
+          w = fromIntegral $ cellSize * _boardNj
+          h = fromIntegral $ cellSize * _boardNi
+        in canvas 
+              [ width_ (ms $ show w)
+              , height_ (ms $ show h)
+              , Style.style_  [Style.border "2px solid black"]
+              ]
+            initCanvas
+            (drawCanvas w h m)
 
 initCanvas :: DOMRef -> Canvas ()
 initCanvas _ = pure ()
@@ -79,8 +90,9 @@ drawCanvas w h m () = do
   Canvas.fillStyle (Canvas.color backgroundColor)
   Canvas.fillRect (0, 0, w, h)
 
-  Canvas.fillStyle (Canvas.color wallColor)
-  forBoard (m^.modelBoard) drawBoardCell 
+  forM_ (m^.modelBoard) $ \b -> do
+    Canvas.fillStyle (Canvas.color wallColor)
+    forBoard b drawBoardCell 
 
   Canvas.fillStyle (Canvas.color currentColor)
   drawCell 1 1
@@ -114,5 +126,7 @@ appComponent :: AppComponent
 appComponent = do
   let initialModel = mkModel
   (component initialModel updateModel viewModel)
-    { logLevel = DebugAll }
+    { logLevel = DebugAll
+    , initialAction = Just (ActionBoard "maze1.txt")
+    }
 

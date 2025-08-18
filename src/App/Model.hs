@@ -14,15 +14,12 @@ import Game.Position
 data Model = Model
   { _modelError :: MisoString
   , _modelName :: MisoString
-  , _modelInfos :: Infos
-  , _modelBoard :: Board
+  , _modelInfos :: Maybe Infos
+  , _modelBoard :: Maybe Board
   } deriving (Eq)
 
 makeLenses ''Model
 
 mkModel :: Model
-mkModel = Model " " "myname" infos board    -- TODO
-  where
-    infos = mkInfos [] (Position 1 1) 0
-    board = mkBoard
+mkModel = Model " " "myname" Nothing Nothing    -- TODO
 
