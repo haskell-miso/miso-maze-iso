@@ -14,7 +14,7 @@ executable app
     Game.Common
     Game.Game
     Network.Protocol
-    Server.Api
+    Network.Api
   build-depends: 
     aeson,
     base,
@@ -40,8 +40,11 @@ executable server
     App.Model
     Game.Common
     Game.Game
+    Network.Api
     Network.Protocol
-    Server.Api
+    Server.Model
+    Server.ServerApp
+    Server.WsApp
   build-depends: 
     aeson,
     base,
@@ -56,7 +59,9 @@ executable server
     wai,
     wai-app-static,
     wai-extra,
-    warp
+    wai-websockets,
+    warp,
+    websockets
   ghc-options:
     -Wall -O2 -ddump-splices
   default-language:

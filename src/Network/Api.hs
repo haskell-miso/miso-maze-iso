@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Server.Api where
+module Network.Api where
 
 import Data.Proxy
 import Miso.String

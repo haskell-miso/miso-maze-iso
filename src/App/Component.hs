@@ -8,12 +8,12 @@ import Miso
 import Miso.Canvas (Canvas, canvas)
 import Miso.Canvas qualified as Canvas 
 import Miso.Lens
-import Miso.Style qualified as CSS
+import Miso.CSS qualified as CSS
 import Miso.String (strip)
 
 import App.Model 
 import Game.Common
-import Server.Api
+import Network.Api
 
 -------------------------------------------------------------------------------
 -- params
