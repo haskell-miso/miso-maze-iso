@@ -22,11 +22,9 @@ import Server.Api
 cellSize :: Int
 cellSize = 20
 
-backgroundColor, wallColor, currentColor, otherColor :: Style.Color
-backgroundColor   = Style.Hex "88DD88"
-wallColor         = Style.Hex "2277DD"
-currentColor      = Style.Hex "FF0000"
-otherColor        = Style.Hex "666666"
+backgroundColor, wallColor :: Style.Color
+backgroundColor   = Style.hex 0x88DD88
+wallColor         = Style.hex 0x2277DD
 
 -------------------------------------------------------------------------------
 -- Action
@@ -36,7 +34,8 @@ data Action
     = ActionError MisoString
     | ActionInputName MisoString
     | ActionConnect
-    | ActionParseBoard MisoString
+    | ActionSetBoard MisoString
+    | ActionSetInfos Infos
     deriving (Eq)
 
 -------------------------------------------------------------------------------
@@ -58,13 +57,16 @@ updateModel ActionConnect = do
     else do
       modelError .= ""
       -- TODO
-      modelName .= Just inputName
-      fetch (mkStaticUri "maze1.json") "GET" Nothing [] ActionParseBoard ActionError
+      fetch (mkStaticUri "maze1.json") "GET" Nothing [] ActionSetBoard ActionError
+      fetch (mkStaticUri "infos1.json") "GET" Nothing [] ActionSetInfos ActionError
 
-updateModel (ActionParseBoard str) =
+updateModel (ActionSetBoard str) =
   case parseBoard str of
     Nothing -> modelError .= "error: failed to parse board"
-    Just b -> modelBoard .= Just b
+    Just board -> modelBoard .= Just board
+
+updateModel (ActionSetInfos infos) =
+  modelInfos .= Just infos
 
 -------------------------------------------------------------------------------
 -- View
@@ -81,23 +83,16 @@ viewModel m@Model{..} =
 
   where
     viewMain =
-      case (_modelName, _modelBoard) of
-        (Just name, Just board) -> viewBoard name board
-        (Just name, Nothing) -> viewName name
-        _ -> viewStart
+      case (_modelInfos, _modelBoard) of
+        (Just infos, Just board) -> viewRunning infos board
+        _ -> viewStarting
 
-    viewBoard name Board{..} =
+    viewRunning Infos{..} Board{..} =
       let 
         w = fromIntegral $ cellSize * _boardNj
         h = fromIntegral $ cellSize * _boardNi
       in div_ []
-          [ p_ [] 
-              [ text ("You are: " <> name) 
-              , br_ []
-              , text ("Score: " <> ms (show $ m^.modelInfos^.infosScore))
-              , br_ []
-              , "Use keyboard arrows and meet other players."
-              ]
+          [ p_ [] [ "Meet other players, using keyboard arrows." ]
           , canvas 
               [ width_ (ms $ show w)
               , height_ (ms $ show h)
@@ -105,15 +100,10 @@ viewModel m@Model{..} =
               ]
             initCanvas
             (drawCanvas w h m)
+          , p_ [] [ text ("Score: " <> ms (show _infosScore)) ]
           ]
 
-    viewName name =
-      div_ []
-        [ p_ [] [ text ("You are: " <> name) ]
-        , p_ [] [ "Waiting server..." ]
-        ]
-
-    viewStart =
+    viewStarting =
       div_ []
         [ "Name: "
         , input_ [ type_ "text", onChange ActionInputName ]
@@ -134,12 +124,14 @@ drawCanvas w h m () = do
     Canvas.fillStyle (Canvas.color wallColor)
     forBoard b drawBoardCell 
 
+{-
   Canvas.fillStyle (Canvas.color currentColor)
   drawCell 1 1
 
   Canvas.fillStyle (Canvas.color otherColor)
   drawCell 1 3
   -- TODO current, other
+-}
 
 
 drawBoardCell :: Int -> Int -> Cell -> Canvas ()

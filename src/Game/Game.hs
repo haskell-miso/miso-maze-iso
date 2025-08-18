@@ -2,9 +2,9 @@
 
 module Game.Game where
 
-import Data.Map as M
-import Data.Vector qualified as V
-import Miso
+import Data.IntMap qualified as IM
+-- import Data.Vector qualified as V
+-- import Miso
 import Miso.Lens
 import Miso.Lens.TH
 
@@ -12,18 +12,20 @@ import Game.Common
 
 data Game = Game
   { _gameBoard :: Board
-  , _gamePlayers :: Map MisoString Position
+  , _gamePlayers :: IM.IntMap Player
   , _gameScore :: Int
   } deriving (Eq)
 
 makeLenses ''Game
 
-playMove :: MisoString -> Move -> Game -> Maybe Game
+playMove :: Int -> Move -> Game -> Maybe Game
 playMove _ _ g = Just g
 
-getInfos :: MisoString -> Game -> Maybe Infos
-getInfos name Game{..} =
-  case name `M.lookup` _gamePlayers of
+getInfos :: Int -> Game -> Maybe Infos
+getInfos col Game{..} =
+  case col `IM.lookup` _gamePlayers of
     Nothing -> Nothing
-    Just p -> Just $ Infos (elems _gamePlayers) p _gameScore
+    Just _ -> Just $ Infos players _gameScore
+  where
+    players = []  -- TODO
 

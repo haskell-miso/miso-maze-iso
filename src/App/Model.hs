@@ -11,13 +11,12 @@ import Game.Common
 data Model = Model
   { _modelError :: MisoString
   , _modelInputName :: MisoString
-  , _modelName :: Maybe MisoString
+  , _modelInfos :: Maybe Infos
   , _modelBoard :: Maybe Board
-  , _modelInfos :: Infos
   } deriving (Eq)
 
 makeLenses ''Model
 
 mkModel :: Model
-mkModel = Model " " " " Nothing Nothing mkInfos
+mkModel = Model " " " " Nothing Nothing
 

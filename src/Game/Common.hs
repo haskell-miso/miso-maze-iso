@@ -1,11 +1,14 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Game.Common where
 
 import Control.Monad
 import Control.Applicative
+import Data.Aeson as Aeson
 import Data.Char
 import Data.Vector qualified as V
+import GHC.Generics
 import Miso
 import Miso.Lens
 import Miso.Lens.TH
@@ -19,21 +22,42 @@ import Miso.Util.Parser as P
 data Position = Position
   { _posI :: Int
   , _posJ :: Int
-  } deriving (Eq)
+  } deriving (Eq, Generic)
 
 makeLenses ''Position
 
+instance ToJSON Position where
+    toEncoding = genericToEncoding Aeson.defaultOptions
+
+instance FromJSON Position
+
+data Player = Player
+  { _playerName :: MisoString
+  , _playerPos :: Position
+  , _playerCol :: Int
+  } deriving (Eq, Generic)
+
+makeLenses ''Player
+
+instance ToJSON Player where
+    toEncoding = genericToEncoding Aeson.defaultOptions
+
+instance FromJSON Player
+
 data Infos = Infos
-  { _infosPlayers :: [Position]
-  , _infosCurrent :: Position
+  { _infosPlayers :: [Player]
   , _infosScore :: Int
-  } deriving (Eq)
+  } deriving (Eq, Generic)
 
 makeLenses ''Infos
 
+instance ToJSON Infos where
+    toEncoding = genericToEncoding Aeson.defaultOptions
+
+instance FromJSON Infos
+
 mkInfos :: Infos
--- mkInfos :: [Position] -> Position -> Int -> Infos
-mkInfos = Infos [] (Position 0 0) 0
+mkInfos = Infos [] 0
 
 data Move
   = MoveUp
