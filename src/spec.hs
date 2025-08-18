@@ -1,11 +1,11 @@
 
 import Test.Hspec
 
-import Game.BoardSpec
+import Game.CommonSpec
 -- import Game.GameSpec
 
 main :: IO ()
 main = hspec $ do
-  Game.BoardSpec.spec
+  Game.CommonSpec.spec
   -- Game.GameSpec.spec
 

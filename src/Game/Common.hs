@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Game.Board where
+module Game.Common where
 
 import Control.Monad
 import Control.Applicative
@@ -13,7 +13,37 @@ import Miso.Util.Lexer as L
 import Miso.Util.Parser as P
 
 -------------------------------------------------------------------------------
--- types
+-- basic types
+-------------------------------------------------------------------------------
+
+data Position = Position
+  { _posI :: Int
+  , _posJ :: Int
+  } deriving (Eq)
+
+makeLenses ''Position
+
+data Infos = Infos
+  { _infosPlayers :: [Position]
+  , _infosCurrent :: Position
+  , _infosScore :: Int
+  } deriving (Eq)
+
+makeLenses ''Infos
+
+mkInfos :: Infos
+-- mkInfos :: [Position] -> Position -> Int -> Infos
+mkInfos = Infos [] (Position 0 0) 0
+
+data Move
+  = MoveUp
+  | MoveDown
+  | MoveLeft
+  | MoveRight
+  deriving (Eq)
+
+-------------------------------------------------------------------------------
+-- Board
 -------------------------------------------------------------------------------
 
 data Cell
@@ -29,10 +59,6 @@ data Board = Board
 
 makeLenses ''Board
 
--------------------------------------------------------------------------------
--- types
--------------------------------------------------------------------------------
-
 forBoard :: (Monad m) => Board -> (Int -> Int -> Cell -> m ()) -> m ()
 forBoard Board{..} f = 
   V.iforM_ _boardData $ \k c -> 
@@ -44,10 +70,6 @@ ij2k nj (i, j) = i*nj + j
 
 k2ij :: Int -> Int -> (Int, Int)
 k2ij nj k = (k `div` nj, k`rem` nj)
-
--------------------------------------------------------------------------------
--- lexer
--------------------------------------------------------------------------------
 
 data Token
   = TokNb Int
@@ -73,10 +95,6 @@ lexerToken
 
 lexerTokens :: Lexer [Token]
 lexerTokens = filter (/=TokSpace) <$> some lexerToken
-
--------------------------------------------------------------------------------
--- parser
--------------------------------------------------------------------------------
 
 parserBoard :: Parser Token Board
 parserBoard = do

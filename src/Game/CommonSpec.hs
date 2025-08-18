@@ -1,7 +1,7 @@
 {-# LANGUAGE MultilineStrings #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Game.BoardSpec (spec) where
+module Game.CommonSpec (spec) where
 
 import Data.Either
 import Data.Vector qualified as V
@@ -10,7 +10,7 @@ import Miso.Util.Lexer as L
 import Miso.Util.Parser as P
 import Test.Hspec
 
-import Game.Board
+import Game.Common
 
 maze1String :: MisoString
 maze1String = 

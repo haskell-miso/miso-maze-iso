@@ -11,11 +11,10 @@ executable app
   other-modules:
     App.Component
     App.Model
-    Game.Board
+    Game.Common
     Game.Game
-    Game.Infos
-    Game.Position
     Network.Protocol
+    Server.Api
   build-depends: 
     aeson,
     base,
@@ -39,10 +38,8 @@ executable server
   other-modules:
     App.Component
     App.Model
-    Game.Board
+    Game.Common
     Game.Game
-    Game.Infos
-    Game.Position
     Network.Protocol
     Server.Api
   build-depends: 
@@ -81,8 +78,8 @@ test-suite test
     miso,
     vector
   other-modules:
-    Game.Board
-    Game.BoardSpec
+    Game.Common
+    Game.CommonSpec
     -- Game.Game
     -- Game.GameSpec
   default-language:

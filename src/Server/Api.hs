@@ -18,6 +18,3 @@ uriStatic  = allLinks' linkURI (Proxy @PublicApi)
 mkStaticUri :: MisoString -> MisoString
 mkStaticUri filename = ms (show uriStatic) <> "/" <> filename
 
-uri2ms :: URI -> MisoString
-uri2ms = ms . show
-

@@ -6,20 +6,18 @@ import Miso
 import Miso.Lens
 import Miso.Lens.TH
 
-import Game.Board
-import Game.Game
-import Game.Infos
-import Game.Position
+import Game.Common
 
 data Model = Model
   { _modelError :: MisoString
-  , _modelName :: MisoString
-  , _modelInfos :: Maybe Infos
+  , _modelInputName :: MisoString
+  , _modelName :: Maybe MisoString
   , _modelBoard :: Maybe Board
+  , _modelInfos :: Infos
   } deriving (Eq)
 
 makeLenses ''Model
 
 mkModel :: Model
-mkModel = Model " " "myname" Nothing Nothing    -- TODO
+mkModel = Model " " " " Nothing Nothing mkInfos
 

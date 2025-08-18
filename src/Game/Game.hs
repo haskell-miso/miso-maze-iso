@@ -8,16 +8,7 @@ import Miso
 import Miso.Lens
 import Miso.Lens.TH
 
-import Game.Board
-import Game.Infos
-import Game.Position
-
-data Move
-  = MoveUp
-  | MoveDown
-  | MoveLeft
-  | MoveRight
-  deriving (Eq)
+import Game.Common
 
 data Game = Game
   { _gameBoard :: Board

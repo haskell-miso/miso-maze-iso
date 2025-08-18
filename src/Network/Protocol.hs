@@ -1,8 +1,12 @@
 
 module Network.Protocol where
 
+import Data.Aeson
+import Miso
+
 data ServerMsg
-  = UpdateBoard
+  = Rejected MisoString
+  | UpdateBoard
   | UpdateInfos
   deriving (Eq)
 

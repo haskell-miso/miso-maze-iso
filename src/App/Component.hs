@@ -9,10 +9,11 @@ import Miso.Canvas (Canvas, canvas)
 import Miso.Canvas qualified as Canvas 
 import Miso.Lens
 import Miso.Style qualified as Style
+import Miso.String (strip)
 
 import App.Model 
-import Game.Board
-import Game.Game
+import Game.Common
+import Server.Api
 
 -------------------------------------------------------------------------------
 -- params
@@ -33,7 +34,9 @@ otherColor        = Style.Hex "666666"
 
 data Action
     = ActionError MisoString
-    | ActionBoard MisoString
+    | ActionInputName MisoString
+    | ActionConnect
+    | ActionParseBoard MisoString
     deriving (Eq)
 
 -------------------------------------------------------------------------------
@@ -45,9 +48,23 @@ updateModel :: Action -> Transition Model Action
 updateModel (ActionError str) =
   modelError .= str
 
-updateModel (ActionBoard filename) =
-  -- fetch (mkStaticUri filename)
-  pure () -- TODO
+updateModel (ActionInputName str) =
+  modelInputName .= str
+
+updateModel ActionConnect = do
+  inputName <- strip <$> use modelInputName
+  if inputName == ""
+    then modelError .= "Please, enter a valid name."
+    else do
+      modelError .= ""
+      -- TODO
+      modelName .= Just inputName
+      fetch (mkStaticUri "maze1.json") "GET" Nothing [] ActionParseBoard ActionError
+
+updateModel (ActionParseBoard str) =
+  case parseBoard str of
+    Nothing -> modelError .= "error: failed to parse board"
+    Just b -> modelBoard .= Just b
 
 -------------------------------------------------------------------------------
 -- View
@@ -58,27 +75,50 @@ viewModel m@Model{..} =
   div_ 
     []
     [ h1_ [] [ "miso-maze" ]
-    , p_ []
-        [ button_ [ onClick (ActionError "error")  ] [ "launch error" ]
-        ]
+    , viewMain
     , p_ [] [ text _modelError ]
-    , viewBoard _modelBoard
     ]
 
   where
-    viewBoard = \case
-      Nothing -> span_ [] []
-      Just Board{..} ->
-        let 
-          w = fromIntegral $ cellSize * _boardNj
-          h = fromIntegral $ cellSize * _boardNi
-        in canvas 
+    viewMain =
+      case (_modelName, _modelBoard) of
+        (Just name, Just board) -> viewBoard name board
+        (Just name, Nothing) -> viewName name
+        _ -> viewStart
+
+    viewBoard name Board{..} =
+      let 
+        w = fromIntegral $ cellSize * _boardNj
+        h = fromIntegral $ cellSize * _boardNi
+      in div_ []
+          [ p_ [] 
+              [ text ("You are: " <> name) 
+              , br_ []
+              , text ("Score: " <> ms (show $ m^.modelInfos^.infosScore))
+              , br_ []
+              , "Use keyboard arrows and meet other players."
+              ]
+          , canvas 
               [ width_ (ms $ show w)
               , height_ (ms $ show h)
               , Style.style_  [Style.border "2px solid black"]
               ]
             initCanvas
             (drawCanvas w h m)
+          ]
+
+    viewName name =
+      div_ []
+        [ p_ [] [ text ("You are: " <> name) ]
+        , p_ [] [ "Waiting server..." ]
+        ]
+
+    viewStart =
+      div_ []
+        [ "Name: "
+        , input_ [ type_ "text", onChange ActionInputName ]
+        , button_ [ onClick ActionConnect ] [ "connect" ]
+        ]
 
 initCanvas :: DOMRef -> Canvas ()
 initCanvas _ = pure ()
@@ -127,6 +167,5 @@ appComponent = do
   let initialModel = mkModel
   (component initialModel updateModel viewModel)
     { logLevel = DebugAll
-    , initialAction = Just (ActionBoard "maze1.txt")
     }
 
