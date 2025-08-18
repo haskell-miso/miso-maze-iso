@@ -1,9 +1,11 @@
 
 import Test.Hspec
 
-import Domain.GameSpec
+import Game.BoardSpec
+-- import Game.GameSpec
 
 main :: IO ()
 main = hspec $ do
-  Domain.GameSpec.spec
+  Game.BoardSpec.spec
+  -- Game.GameSpec.spec
 

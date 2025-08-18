@@ -76,11 +76,15 @@ test-suite test
     exitcode-stdio-1.0
   build-depends:
     base,
+    -- container,
     hspec,
+    miso,
     vector
   other-modules:
-    Game.Game
-    Game.GameSpec
+    Game.Board
+    Game.BoardSpec
+    -- Game.Game
+    -- Game.GameSpec
   default-language:
     GHC2024
   default-extensions:
