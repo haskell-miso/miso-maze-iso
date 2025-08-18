@@ -8,15 +8,17 @@ import Miso.Lens.TH
 
 import Game.Common
 
+-- TODO board name?
+
 data Model = Model
   { _modelError :: MisoString
   , _modelInputName :: MisoString
-  , _modelInfos :: Maybe Infos
+  , _modelPlayers :: [Player]
   , _modelBoard :: Maybe Board
   } deriving (Eq)
 
 makeLenses ''Model
 
 mkModel :: Model
-mkModel = Model " " " " Nothing Nothing
+mkModel = Model  " " " " [] Nothing
 

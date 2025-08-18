@@ -8,7 +8,7 @@ import Miso
 import Miso.Canvas (Canvas, canvas)
 import Miso.Canvas qualified as Canvas 
 import Miso.Lens
-import Miso.Style qualified as Style
+import Miso.Style qualified as CSS
 import Miso.String (strip)
 
 import App.Model 
@@ -22,9 +22,9 @@ import Server.Api
 cellSize :: Int
 cellSize = 20
 
-backgroundColor, wallColor :: Style.Color
-backgroundColor   = Style.hex 0x88DD88
-wallColor         = Style.hex 0x2277DD
+backgroundColor, wallColor :: CSS.Color
+backgroundColor   = CSS.hex 0x88DD88
+wallColor         = CSS.hex 0x2277DD
 
 -------------------------------------------------------------------------------
 -- Action
@@ -35,7 +35,7 @@ data Action
     | ActionInputName MisoString
     | ActionConnect
     | ActionSetBoard MisoString
-    | ActionSetInfos Infos
+    | ActionSetPlayers [Player]
     deriving (Eq)
 
 -------------------------------------------------------------------------------
@@ -58,15 +58,15 @@ updateModel ActionConnect = do
       modelError .= ""
       -- TODO
       fetch (mkStaticUri "maze1.json") "GET" Nothing [] ActionSetBoard ActionError
-      fetch (mkStaticUri "infos1.json") "GET" Nothing [] ActionSetInfos ActionError
+      fetch (mkStaticUri "infos1.json") "GET" Nothing [] ActionSetPlayers ActionError
 
 updateModel (ActionSetBoard str) =
   case parseBoard str of
     Nothing -> modelError .= "error: failed to parse board"
     Just board -> modelBoard .= Just board
 
-updateModel (ActionSetInfos infos) =
-  modelInfos .= Just infos
+updateModel (ActionSetPlayers players) =
+  modelPlayers .= players
 
 -------------------------------------------------------------------------------
 -- View
@@ -83,11 +83,18 @@ viewModel m@Model{..} =
 
   where
     viewMain =
-      case (_modelInfos, _modelBoard) of
-        (Just infos, Just board) -> viewRunning infos board
+      case (_modelPlayers, _modelBoard) of
+        (players@(_:_), Just board) -> viewRunning players board
         _ -> viewStarting
 
-    viewRunning Infos{..} Board{..} =
+    viewStarting =
+      div_ []
+        [ "Name: "
+        , input_ [ type_ "text", onChange ActionInputName ]
+        , button_ [ onClick ActionConnect ] [ "connect" ]
+        ]
+
+    viewRunning players Board{..} =
       let 
         w = fromIntegral $ cellSize * _boardNj
         h = fromIntegral $ cellSize * _boardNi
@@ -96,19 +103,33 @@ viewModel m@Model{..} =
           , canvas 
               [ width_ (ms $ show w)
               , height_ (ms $ show h)
-              , Style.style_  [Style.border "2px solid black"]
+              , CSS.style_  [CSS.border "2px solid black"]
               ]
             initCanvas
             (drawCanvas w h m)
-          , p_ [] [ text ("Score: " <> ms (show _infosScore)) ]
+          , p_ [] 
+              [ "Players:"
+              , div_
+                  [ CSS.style_ 
+                      [ CSS.display "flex"
+                      , CSS.flexWrap "wrap"
+                      ]
+                  ]
+                  (map fmtPlayer players)
+              ]
           ]
 
-    viewStarting =
-      div_ []
-        [ "Name: "
-        , input_ [ type_ "text", onChange ActionInputName ]
-        , button_ [ onClick ActionConnect ] [ "connect" ]
+    fmtPlayer Player{..} =
+      div_
+        [ CSS.style_ 
+            [ CSS.backgroundColor backgroundColor
+            , CSS.fontWeight "bold" 
+            , CSS.margin "10px" 
+            , CSS.padding "10px" 
+            , CSS.color (CSS.hex _playerCol)
+            ]
         ]
+        [ text _playerName ]
 
 initCanvas :: DOMRef -> Canvas ()
 initCanvas _ = pure ()

@@ -44,21 +44,6 @@ instance ToJSON Player where
 
 instance FromJSON Player
 
-data Infos = Infos
-  { _infosPlayers :: [Player]
-  , _infosScore :: Int
-  } deriving (Eq, Generic)
-
-makeLenses ''Infos
-
-instance ToJSON Infos where
-    toEncoding = genericToEncoding Aeson.defaultOptions
-
-instance FromJSON Infos
-
-mkInfos :: Infos
-mkInfos = Infos [] 0
-
 data Move
   = MoveUp
   | MoveDown
@@ -122,8 +107,8 @@ lexerTokens = filter (/=TokSpace) <$> some lexerToken
 
 parserBoard :: Parser Token Board
 parserBoard = do
-  ni <- parseN
-  nj <- parseN
+  ni <- parseNb
+  nj <- parseNb
   cells <- parseCells
   guard (ni*nj == V.length cells)
   pure $ Board ni nj cells
@@ -138,7 +123,7 @@ parserBoard = do
       TokNb n -> n
       _ -> error "not a TokNb"
 
-    parseN = tokNb <$> P.satisfy isTokNb 
+    parseNb = tokNb <$> P.satisfy isTokNb 
 
     parseWall = P.satisfy (==TokWall) >> pure CellWall 
 

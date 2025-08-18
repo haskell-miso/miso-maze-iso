@@ -72,8 +72,8 @@ test-suite test
   type:
     exitcode-stdio-1.0
   build-depends:
+    aeson,
     base,
-    -- container,
     hspec,
     miso,
     vector

@@ -21,11 +21,16 @@ makeLenses ''Game
 playMove :: Int -> Move -> Game -> Maybe Game
 playMove _ _ g = Just g
 
-getInfos :: Int -> Game -> Maybe Infos
-getInfos col Game{..} =
+{-
+
+getPlayers :: Int -> Game -> [Player]
+getPlayers col Game{..} =
   case col `IM.lookup` _gamePlayers of
-    Nothing -> Nothing
-    Just _ -> Just $ Infos players _gameScore
+    Nothing -> []
+    Just _ -> Infos players _gameScore
   where
     players = []  -- TODO
+-}
+
+
 
