@@ -45,6 +45,8 @@ data Action
     | ActionWsMessage JSVal
     | ActionWsError JSVal
     | ActionSend WebSocket JSVal
+    | ActionDebugStr MisoString
+    | ActionDebugVal JSVal
     -- TODO avoid JSVal?
 
 -------------------------------------------------------------------------------
@@ -81,10 +83,13 @@ updateModel (ActionSetPlayers players) =
   modelPlayers .= players
 
 updateModel (ActionWsOpen name socket) =
-  io (ActionSend socket <$> toJSVal (Join name))
+  -- io (ActionSend socket <$> toJSVal name)
+  io (ActionSend socket <$> toJSVal (jsonStringify $ Join name))
 
-updateModel (ActionSend socket val) =
+updateModel (ActionSend socket val) = do
+  issue (ActionDebugVal val)
   send socket val
+  -- issue $ ActionWsError val
 
 updateModel (ActionWsClosed _) =
   pure ()
@@ -98,6 +103,17 @@ updateModel (ActionWsError val) =
 #else
   io (ActionError <$> valToText val)
 #endif
+
+updateModel (ActionDebugStr str) =
+  io_ $ consoleLog str
+
+updateModel (ActionDebugVal val) =
+#ifdef WASM
+  io (ActionDebugStr <$> valToStr val)
+#else
+  io (ActionDebugStr <$> valToText val)
+#endif
+
 
 -------------------------------------------------------------------------------
 -- View
