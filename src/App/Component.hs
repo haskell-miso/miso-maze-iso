@@ -139,33 +139,27 @@ initCanvas :: DOMRef -> Canvas ()
 initCanvas _ = pure ()
 
 drawCanvas :: Double -> Double -> Model -> () -> Canvas ()
-drawCanvas w h m () = do
+drawCanvas w h Model{..} () = do
   Canvas.clearRect (0, 0, w, h)
 
   Canvas.fillStyle (Canvas.color backgroundColor)
   Canvas.fillRect (0, 0, w, h)
 
-  forM_ (m^.modelBoard) $ \b -> do
-    Canvas.fillStyle (Canvas.color wallColor)
-    forBoard b drawBoardCell 
+  Canvas.fillStyle (Canvas.color wallColor)
+  forM_ _modelBoard (`forBoard` drawBoardCell)
 
-{-
-  Canvas.fillStyle (Canvas.color currentColor)
-  drawCell 1 1
-
-  Canvas.fillStyle (Canvas.color otherColor)
-  drawCell 1 3
-  -- TODO current, other
--}
+  forM_ _modelPlayers $ \Player{..} -> do
+    Canvas.fillStyle (Canvas.color (CSS.hex _playerCol))
+    drawCell _playerPos
 
 
 drawBoardCell :: Int -> Int -> Cell -> Canvas ()
 drawBoardCell i j = \case
   CellEmpty -> pure ()
-  CellWall  -> drawCell i j
+  CellWall  -> drawCell (Position i j)
 
-drawCell :: Int -> Int -> Canvas ()
-drawCell i j =
+drawCell :: Position -> Canvas ()
+drawCell (Position i j) =
   Canvas.fillRect (cellSizeD * fromIntegral j, cellSizeD * fromIntegral i, cellSizeD, cellSizeD)
 
 cellSizeD :: Double
