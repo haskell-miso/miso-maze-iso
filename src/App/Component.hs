@@ -103,33 +103,37 @@ viewModel m@Model{..} =
           , canvas 
               [ width_ (ms $ show w)
               , height_ (ms $ show h)
-              , CSS.style_  [CSS.border "2px solid black"]
+              , CSS.style_  [CSS.border "1px solid black"]
               ]
             initCanvas
             (drawCanvas w h m)
-          , p_ [] 
-              [ "Players:"
-              , div_
-                  [ CSS.style_ 
-                      [ CSS.display "flex"
-                      , CSS.flexWrap "wrap"
-                      ]
-                  ]
-                  (map fmtPlayer players)
-              ]
+          , div_ [] [ "Board name: " ]    -- TODO
+          , div_ [] [ "Remaining meetings: " ]  -- TODO
+          , div_ [] [ "Players:" ]
+          , div_ [ CSS.style_ [ CSS.marginLeft "10px" ] ] (map fmtPlayer' players)
           ]
 
-    fmtPlayer Player{..} =
-      div_
-        [ CSS.style_ 
-            [ CSS.backgroundColor backgroundColor
-            , CSS.fontWeight "bold" 
-            , CSS.margin "10px" 
-            , CSS.padding "10px" 
-            , CSS.color (CSS.hex _playerCol)
+    fmtPlayer' Player{..} =
+        div_
+            [ CSS.style_ 
+                [ CSS.display "flex"
+                , CSS.flexWrap "wrap"
+                , CSS.verticalAlign "middle"
+                , CSS.alignItems "center"
+                ]
             ]
-        ]
-        [ text _playerName ]
+            [ div_
+                [ CSS.style_ 
+                    [ CSS.backgroundColor (CSS.hex _playerCol)
+                    , CSS.borderColor backgroundColor
+                    , CSS.marginRight "5px" 
+                    , CSS.border "5px solid" 
+                    , CSS.padding "10px" 
+                    ]
+                 ]
+                [ " " ]
+            , text _playerName
+            ]
 
 initCanvas :: DOMRef -> Canvas ()
 initCanvas _ = pure ()

@@ -1,4 +1,5 @@
 [ 
-  { "_playerName": "foo", "_playerCol": 10000000, "_playerPos": { "_posI": 1, "_posJ": 2} },
-  { "_playerName": "bar", "_playerCol": 255, "_playerPos": { "_posI": 2, "_posJ": 4} }
+  { "_playerName": "foo", "_playerCol": 16711680, "_playerPos": { "_posI": 1, "_posJ": 2} },
+  { "_playerName": "bar", "_playerCol": 16776960, "_playerPos": { "_posI": 2, "_posJ": 4} },
+  { "_playerName": "foo bar baz", "_playerCol": 16777215, "_playerPos": { "_posI": 4, "_posJ": 2} }
 ]
