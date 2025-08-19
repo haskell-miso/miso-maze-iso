@@ -10,10 +10,13 @@ import Miso.Canvas qualified as Canvas
 import Miso.Lens
 import Miso.CSS qualified as CSS
 import Miso.String (strip)
+import Miso.WebSocket
 
 import App.Model 
 import Game.Common
 import Network.Api
+
+import Language.Javascript.JSaddle
 
 -------------------------------------------------------------------------------
 -- params
@@ -36,7 +39,11 @@ data Action
     | ActionConnect
     | ActionSetBoard MisoString
     | ActionSetPlayers [Player]
-    deriving (Eq)
+    | ActionWsOpen MisoString WebSocket
+    | ActionWsClosed Closed
+    | ActionWsMessage JSVal
+    | ActionWsError JSVal
+    | ActionSend WebSocket JSVal
 
 -------------------------------------------------------------------------------
 -- Update
@@ -56,6 +63,9 @@ updateModel ActionConnect = do
     then modelError .= "Please, enter a valid name."
     else do
       modelError .= ""
+      wsUrl <- use modelWsUrl
+      io_ (consoleLog wsUrl)  -- TODO
+      connect wsUrl (ActionWsOpen inputName) ActionWsClosed ActionWsMessage ActionWsError
       -- TODO
       fetch (mkStaticUri "maze1.json") "GET" Nothing [] ActionSetBoard ActionError
       fetch (mkStaticUri "infos1.json") "GET" Nothing [] ActionSetPlayers ActionError
@@ -67,6 +77,21 @@ updateModel (ActionSetBoard str) =
 
 updateModel (ActionSetPlayers players) =
   modelPlayers .= players
+
+updateModel (ActionWsOpen name socket) =
+  io (ActionSend socket <$> toJSVal name)
+
+updateModel (ActionSend socket val) =
+  send socket val
+
+updateModel (ActionWsClosed _) =
+  pure ()
+
+updateModel (ActionWsMessage _) =
+  pure ()
+
+updateModel (ActionWsError _) =
+  pure ()
 
 -------------------------------------------------------------------------------
 -- View
@@ -165,17 +190,15 @@ drawCell (Position i j) =
 cellSizeD :: Double
 cellSizeD = fromIntegral cellSize
 
-
-
 -------------------------------------------------------------------------------
 -- Component
 -------------------------------------------------------------------------------
 
 type AppComponent = App Model Action
 
-appComponent :: AppComponent
-appComponent = do
-  let initialModel = mkModel
+appComponent :: MisoString -> AppComponent
+appComponent wsUrl = do
+  let initialModel = mkModel wsUrl
   (component initialModel updateModel viewModel)
     { logLevel = DebugAll
     }

@@ -1,10 +1,19 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
-import Miso (miso, run)
+import Miso
+import Network.URI
 
 import App.Component (appComponent)
 
 foreign export javascript "hs_start" main :: IO ()
 
 main :: IO ()
-main = run (miso $ const appComponent)
+main = run (miso (appComponent . uri2url))
+
+uri2url :: URI -> MisoString
+uri2url uri =
+  case uriAuthority uri of
+    Nothing -> ""
+    Just URIAuth{..} -> ms (uriRegName <> uriPort)
 

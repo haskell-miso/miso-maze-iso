@@ -11,7 +11,8 @@ import Game.Common
 -- TODO board name?
 
 data Model = Model
-  { _modelError :: MisoString
+  { _modelWsUrl :: MisoString
+  , _modelError :: MisoString
   , _modelInputName :: MisoString
   , _modelPlayers :: [Player]
   , _modelBoard :: Maybe Board
@@ -19,6 +20,6 @@ data Model = Model
 
 makeLenses ''Model
 
-mkModel :: Model
-mkModel = Model  " " " " [] Nothing
+mkModel :: MisoString -> Model
+mkModel wsUrl = Model wsUrl " " " " [] Nothing
 

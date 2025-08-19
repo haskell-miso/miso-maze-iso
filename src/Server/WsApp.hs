@@ -1,7 +1,7 @@
 
 module Server.WsApp (wsApp) where
 
-import Control.Concurrent.STM
+-- import Control.Concurrent.STM
 import Control.Monad (forever)
 import Network.Wai (Application)
 import Network.Wai.Handler.WebSockets (websocketsOr)
@@ -10,16 +10,18 @@ import Network.WebSockets qualified as WS
 import Network.Protocol
 import Server.Model
 
-wsApp :: TVar Model -> Application -> Application
-wsApp modelVar = websocketsOr WS.defaultConnectionOptions (serverApp modelVar)
+-- TODO data WsState = 
 
-serverApp ::TVar Model -> WS.PendingConnection -> IO ()
-serverApp modelVar pc = do
+wsApp :: Application -> Application
+wsApp = websocketsOr WS.defaultConnectionOptions serverApp
+
+serverApp ::WS.PendingConnection -> IO ()
+serverApp pc = do
   conn <- WS.acceptRequest pc
-  WS.withPingThread conn 30 (pure ()) (runHandler modelVar conn)    -- TODO finally
+  WS.withPingThread conn 30 (pure ()) (runHandler conn)    -- TODO finally
 
-runHandler :: TVar Model -> WS.Connection -> IO ()
-runHandler modelVar conn = forever $ do
+runHandler :: WS.Connection -> IO ()
+runHandler conn = forever $ do
     msg <- WS.receiveDataMessage conn
     -- TODO receiveData receiveDataMessage
     print msg

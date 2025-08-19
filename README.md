@@ -11,6 +11,8 @@ cd output
 ./server
 ```
 
+then go to 127.0.0.1:3000
+
 ## Development
 
 - frontend:

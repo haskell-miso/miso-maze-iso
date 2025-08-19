@@ -22,7 +22,7 @@ import Miso.Util.Parser as P
 data Position = Position
   { _posI :: Int
   , _posJ :: Int
-  } deriving (Eq, Generic)
+  } deriving (Eq, Generic, Show)
 
 makeLenses ''Position
 
@@ -35,7 +35,7 @@ data Player = Player
   { _playerName :: MisoString
   , _playerPos :: Position
   , _playerCol :: Int
-  } deriving (Eq, Generic)
+  } deriving (Eq, Generic, Show)
 
 makeLenses ''Player
 

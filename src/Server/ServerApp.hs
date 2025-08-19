@@ -35,7 +35,7 @@ handlePublicApi
 
 handleClientRoutes :: Server ClientRoutes
 handleClientRoutes 
-  = pure (Page appComponent)
+  = pure (Page $ appComponent " ")
 
 handle404 :: Application
 handle404 _ respond' =
