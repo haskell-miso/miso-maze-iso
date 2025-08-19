@@ -18,18 +18,22 @@ executable app
   build-depends: 
     aeson,
     base,
+    bytestring,
     containers,
     jsaddle,
     miso,
     network-uri,
     servant,
+    text,
     vector
   ghc-options:
     -Wall -O2 -no-hs-main -optl-mexec-model=reactor "-optl-Wl,--export=hs_start" -ddump-splices
+  cpp-options:
+    -DWASM
   default-language:
     GHC2024
   default-extensions:
-    TemplateHaskell
+    CPP TemplateHaskell
 
 executable server
   hs-source-dirs:
@@ -49,6 +53,7 @@ executable server
   build-depends: 
     aeson,
     base,
+    bytestring,
     containers,
     directory,
     http-types,
@@ -71,7 +76,7 @@ executable server
   default-language:
     GHC2024
   default-extensions:
-    TemplateHaskell
+    CPP TemplateHaskell
 
 test-suite test
   main-is:

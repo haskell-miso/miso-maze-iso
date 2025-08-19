@@ -15,8 +15,9 @@ import Miso.WebSocket
 import App.Model 
 import Game.Common
 import Network.Api
+import Network.Protocol
 
-import Language.Javascript.JSaddle
+import Language.Javascript.JSaddle    -- TODO
 
 -------------------------------------------------------------------------------
 -- params
@@ -68,7 +69,7 @@ updateModel ActionConnect = do
       connect wsUrl (ActionWsOpen inputName) ActionWsClosed ActionWsMessage ActionWsError
 
       -- TODO
-      fetch (mkStaticUri "maze1.json") "GET" Nothing [] ActionSetBoard ActionError
+      fetch (mkStaticUri "mazes/maze1.json") "GET" Nothing [] ActionSetBoard ActionError
       fetch (mkStaticUri "infos1.json") "GET" Nothing [] ActionSetPlayers ActionError
 
 updateModel (ActionSetBoard str) =
@@ -80,7 +81,7 @@ updateModel (ActionSetPlayers players) =
   modelPlayers .= players
 
 updateModel (ActionWsOpen name socket) =
-  io (ActionSend socket <$> toJSVal name)
+  io (ActionSend socket <$> toJSVal (Join name))
 
 updateModel (ActionSend socket val) =
   send socket val
@@ -91,8 +92,12 @@ updateModel (ActionWsClosed _) =
 updateModel (ActionWsMessage _) =
   pure ()
 
-updateModel (ActionWsError _) =
-  pure ()
+updateModel (ActionWsError val) =
+#ifdef WASM
+  io (ActionError <$> valToStr val)
+#else
+  io (ActionError <$> valToText val)
+#endif
 
 -------------------------------------------------------------------------------
 -- View

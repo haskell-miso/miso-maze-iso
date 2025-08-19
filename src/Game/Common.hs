@@ -49,7 +49,12 @@ data Move
   | MoveDown
   | MoveLeft
   | MoveRight
-  deriving (Eq)
+  deriving (Eq, Show, Generic)
+
+instance ToJSON Move where
+    toEncoding = genericToEncoding Aeson.defaultOptions
+
+instance FromJSON Move
 
 -------------------------------------------------------------------------------
 -- Board
