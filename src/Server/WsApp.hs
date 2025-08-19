@@ -1,19 +1,21 @@
 
 module Server.WsApp (wsApp) where
 
--- import Control.Concurrent.STM
+import Control.Concurrent.STM
 import Control.Monad (forever)
 import Network.Wai (Application)
 import Network.Wai.Handler.WebSockets (websocketsOr)
 import Network.WebSockets qualified as WS
 
 import Network.Protocol
-import Server.Model
+import Server.WsModel
 
--- TODO data WsState = 
+-------------------------------------------------------------------------------
+-- ws app
+-------------------------------------------------------------------------------
 
-wsApp :: Application -> Application
-wsApp = websocketsOr WS.defaultConnectionOptions serverApp
+wsApp :: TVar WsModel -> Application -> Application
+wsApp _wsVar = websocketsOr WS.defaultConnectionOptions serverApp
 
 serverApp ::WS.PendingConnection -> IO ()
 serverApp pc = do

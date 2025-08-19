@@ -44,6 +44,7 @@ data Action
     | ActionWsMessage JSVal
     | ActionWsError JSVal
     | ActionSend WebSocket JSVal
+    -- TODO avoid JSVal?
 
 -------------------------------------------------------------------------------
 -- Update
@@ -64,8 +65,8 @@ updateModel ActionConnect = do
     else do
       modelError .= ""
       wsUrl <- use modelWsUrl
-      io_ (consoleLog wsUrl)  -- TODO
       connect wsUrl (ActionWsOpen inputName) ActionWsClosed ActionWsMessage ActionWsError
+
       -- TODO
       fetch (mkStaticUri "maze1.json") "GET" Nothing [] ActionSetBoard ActionError
       fetch (mkStaticUri "infos1.json") "GET" Nothing [] ActionSetPlayers ActionError
@@ -200,6 +201,5 @@ appComponent :: MisoString -> AppComponent
 appComponent wsUrl = do
   let initialModel = mkModel wsUrl
   (component initialModel updateModel viewModel)
-    { logLevel = DebugAll
-    }
+    { logLevel = DebugAll }
 

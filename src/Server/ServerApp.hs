@@ -14,7 +14,6 @@ import App.Component
 import App.Model
 import Network.Api
 import Network.Protocol
-import Server.Model
 
 -------------------------------------------------------------------------------
 -- server routing

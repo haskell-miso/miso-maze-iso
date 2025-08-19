@@ -43,13 +43,14 @@ executable server
     Game.Game
     Network.Api
     Network.Protocol
-    Server.Model
+    Server.WsModel
     Server.ServerApp
     Server.WsApp
   build-depends: 
     aeson,
     base,
     containers,
+    directory,
     http-types,
     jsaddle,
     miso,
@@ -57,6 +58,7 @@ executable server
     servant,
     servant-server,
     stm,
+    text,
     vector,
     wai,
     wai-app-static,
@@ -81,14 +83,15 @@ test-suite test
   build-depends:
     aeson,
     base,
+    containers,
     hspec,
     miso,
     vector
   other-modules:
     Game.Common
     Game.CommonSpec
-    -- Game.Game
-    -- Game.GameSpec
+    Game.Game
+    Game.GameSpec
   default-language:
     GHC2024
   default-extensions:
