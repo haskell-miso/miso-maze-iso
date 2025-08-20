@@ -104,9 +104,9 @@ updateModel (ActionWsRecv json) =
   case json of
     Rejected err -> modelError .= "Error: " <> err
     UpdatePlayers ps -> modelPlayers .= ps
-    UpdateBoard filename -> do
-      debug $ "fetching: " <> filename
-      fetch filename "GET" Nothing [] ActionSetBoard ActionDebug
+    UpdateBoard url -> do
+      debug url 
+      fetch url "GET" Nothing [] ActionSetBoard ActionDebug
 
 updateModel (ActionWsSend msg) = do
   socket <- use modelWs

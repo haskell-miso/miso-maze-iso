@@ -66,9 +66,9 @@ handleRun wsVar conn = do
   -- TODO broadcast players
   sendMsg conn (UpdatePlayers [Player "foo" 16711680 (Position 1 2)])
 
-  boardFile <- atomically (_wsCurrentBoard <$> readTVar wsVar)
-  T.putStrLn $ "sending: " <> boardFile
-  sendMsg conn (UpdateBoard boardFile)
+  boardUrl <- atomically (getBoardUrl <$> readTVar wsVar)
+  T.putStrLn $ "sending: " <> boardUrl
+  sendMsg conn (UpdateBoard boardUrl)
 
   forever $ do
     msg <- recvMsg conn

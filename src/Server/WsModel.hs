@@ -16,21 +16,27 @@ import Network.WebSockets qualified as WS
 import System.Directory (listDirectory)
 
 import Game.Game
+import Network.Api
 
 data WsModel = WsModel
   { _wsGame :: Game
   , _wsClients :: M.Map MisoString WS.Connection
   , _wsCurrentBoard :: MisoString
-  , _wsBoardFiles :: [FilePath]
+  , _wsMazeDir :: MisoString
+  , _wsBoardFiles :: [MisoString]
   }
 
 makeLenses ''WsModel
 
-mkWsModel :: FilePath -> IO WsModel
-mkWsModel dir = do
-  mazeFiles <- map (dir++) . sort <$> listDirectory dir
-  T.putStrLn $ "maze files: " <> T.pack (unwords mazeFiles)
-  let model0 = WsModel mkGame M.empty " " mazeFiles
+getBoardUrl :: WsModel -> MisoString
+getBoardUrl WsModel{..} = mkStaticUri (_wsMazeDir <> _wsCurrentBoard)
+
+mkWsModel :: MisoString -> IO WsModel
+mkWsModel mazeDir = do
+  let dir = T.unpack $ mkStaticUri mazeDir 
+  mazeFiles <- sort . map T.pack <$> listDirectory dir
+  T.putStrLn $ "maze files: " <> T.unwords mazeFiles
+  let model0 = WsModel mkGame M.empty " " (mazeDir<>"/") mazeFiles
   nextBoard model0
 
 nextBoard :: WsModel -> IO WsModel
@@ -40,11 +46,11 @@ nextBoard ws@WsModel{..} = do
       T.putStrLn "no more board"
       pure ws
     (f:fs) -> do
-      str' <- T.readFile f
+      str' <- T.readFile $ T.unpack $ mkStaticUri (_wsMazeDir <> f)
       let str = T.filter (/='"') str'    -- TODO use text files
       case loadBoard str _wsGame of
         Nothing -> do
-          T.putStrLn $ "failed to read: " <> ms f
+          T.putStrLn $ "failed to read: " <> f
           pure ws
         Just game -> do
           let boardFile = ms f
