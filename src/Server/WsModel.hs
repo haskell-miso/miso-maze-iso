@@ -3,6 +3,7 @@
 
 module Server.WsModel where
 
+import Data.List (intercalate)
 import Data.Map qualified as M
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
@@ -10,7 +11,7 @@ import Miso
 import Miso.Lens
 import Miso.Lens.TH
 import Network.WebSockets qualified as WS
-import System.Directory
+import System.Directory (listDirectory)
 
 import Game.Game
 
@@ -26,8 +27,9 @@ makeLenses ''WsModel
 
 mkWsModel :: FilePath -> IO WsModel
 mkWsModel dir = do
-  files <- map (dir++) <$> listDirectory dir
-  pure $ WsModel mkGame M.empty " " files
+  mazeFiles <- map (dir++) <$> listDirectory dir
+  putStrLn $ "maze files: " <> intercalate " " mazeFiles
+  pure $ WsModel mkGame M.empty " " mazeFiles
 
 nextBoard :: WsModel -> IO WsModel
 nextBoard ws@WsModel{..} = do 
