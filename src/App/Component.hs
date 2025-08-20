@@ -3,7 +3,7 @@
 
 module App.Component where
 
-import Control.Monad (forM_, when)
+import Control.Monad (forM_)
 import Data.IntSet qualified as IS
 import Miso
 import Miso.Canvas (Canvas, canvas)
@@ -53,14 +53,6 @@ data Action
 debug :: MisoString -> Transition Model Action
 debug str = io_ (consoleLog str)
 
-doKeys :: IS.IntSet -> Transition Model Action
-doKeys keys
-  | IS.member 37 keys = issue $ ActionWsSend (Play MoveLeft)
-  | IS.member 38 keys = issue $ ActionWsSend (Play MoveUp)
-  | IS.member 39 keys = issue $ ActionWsSend (Play MoveRight)
-  | IS.member 40 keys = issue $ ActionWsSend (Play MoveDown)
-  | otherwise = pure ()
-
 -------------------------------------------------------------------------------
 -- Update
 -------------------------------------------------------------------------------
@@ -73,19 +65,18 @@ updateModel ActionNone =
 updateModel (ActionDebug str) =
   debug str
 
-updateModel (ActionKey keys) = do
-  socket <- use modelWs
-  name <- strip <$> use modelName
-  when (IS.member 13 keys && socket == emptyWebSocket && name /= "") $ 
-    issue ActionConnect
-  doKeys keys
+updateModel (ActionKey keys)
+  | IS.member 37 keys = issue $ ActionWsSend (Play MoveLeft)
+  | IS.member 38 keys = issue $ ActionWsSend (Play MoveUp)
+  | IS.member 39 keys = issue $ ActionWsSend (Play MoveRight)
+  | IS.member 40 keys = issue $ ActionWsSend (Play MoveDown)
+  | otherwise = pure ()
 
 updateModel (ActionName str) =
   modelName .= str
 
 updateModel ActionConnect = do
-  modelName %= strip
-  name <- use modelName
+  name <- strip <$> use modelName
   if name == ""
     then modelError .= "Please, enter a valid name."
     else do
@@ -104,7 +95,6 @@ updateModel (ActionWsOpen socket) = do
   issue $ ActionWsSend (Join name)
 
 updateModel (ActionWsClosed c) = do
-  modelError .= "WebSocket closed"
   debug (ms $ show c)
 
 updateModel (ActionWsError err) = do
@@ -212,7 +202,12 @@ drawBoardCell i j = \case
 
 drawCell :: Position -> Canvas ()
 drawCell (Position i j) =
-  Canvas.fillRect (cellSizeD * fromIntegral j, cellSizeD * fromIntegral i, cellSizeD, cellSizeD)
+  Canvas.fillRect 
+    ( cellSizeD * fromIntegral j
+    , cellSizeD * fromIntegral i
+    , cellSizeD
+    , cellSizeD
+    )
 
 cellSizeD :: Double
 cellSizeD = fromIntegral cellSize

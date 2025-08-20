@@ -17,8 +17,8 @@ playerColors :: [Int]
 playerColors =
   [ 0xFF0000
   , 0xFFFF00
-  -- , 0xFFFFFF
-  -- , 0xFF00FF
+  , 0xFFFFFF
+  , 0xFF00FF
   ]
 
 nbMeetings :: Int
@@ -66,17 +66,6 @@ loadBoard str g =
 
 playMove :: Int -> Move -> Game -> Maybe Game
 playMove _ _ g = Just g
-
-{-
-
-getPlayers :: Int -> Game -> [Player]
-getPlayers col Game{..} =
-  case col `IM.lookup` _gamePlayers of
-    Nothing -> []
-    Just _ -> Infos players _gameScore
-  where
-    players = []  -- TODO
--}
 
 -------------------------------------------------------------------------------
 -- internal

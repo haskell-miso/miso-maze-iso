@@ -3,6 +3,7 @@
 
 module Server.WsModel where
 
+import Control.Concurrent.STM
 import Data.List (sort)
 import Data.Map qualified as M
 import Data.Text qualified as T
@@ -10,6 +11,7 @@ import Data.Text.IO qualified as T
 import Miso
 import Miso.Lens
 import Miso.Lens.TH
+import Miso.String (strip)
 import Network.WebSockets qualified as WS
 import System.Directory (listDirectory)
 
@@ -42,10 +44,19 @@ nextBoard ws@WsModel{..} = do
                                & wsCurrentBoard .~ ms f
                                & wsGame .~ game
 
-addClient :: MisoString -> WS.Connection -> WsModel -> Either MisoString WsModel
-addClient name conn ws =
-  case tryAddPlayer name (ws^.wsGame) of
-    Left err -> Left err
-    Right game -> Right $ ws & wsClients %~ M.insert name conn
-                             & wsGame .~ game
+tryAddClient
+  :: MisoString
+  -> WS.Connection
+  -> TVar WsModel
+  -> STM (Either MisoString MisoString)
+tryAddClient name conn wsVar = do
+  let name' = strip name
+  ws <- readTVar wsVar
+  case tryAddPlayer name' (ws^.wsGame) of
+    Left err -> pure $ Left err
+    Right game -> do
+      let ws' = ws & wsClients %~ M.insert name' conn 
+                   & wsGame .~ game
+      writeTVar wsVar ws'
+      pure $ Right name'
 
