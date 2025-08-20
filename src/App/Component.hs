@@ -30,13 +30,6 @@ backgroundColor   = CSS.hex 0x88DD88
 wallColor         = CSS.hex 0x2277DD
 
 -------------------------------------------------------------------------------
--- helpers
--------------------------------------------------------------------------------
-
-debug :: MisoString -> Transition Model Action
-debug str = io_ (consoleLog str)
-
--------------------------------------------------------------------------------
 -- Action
 -------------------------------------------------------------------------------
 
@@ -44,7 +37,7 @@ data Action
   = ActionNone
   | ActionDebug MisoString
   | ActionKey IS.IntSet
-  | ActionInputName MisoString
+  | ActionName MisoString
   | ActionConnect
   | ActionSetBoard MisoString
   | ActionWsOpen WebSocket
@@ -52,6 +45,21 @@ data Action
   | ActionWsError MisoString
   | ActionWsRecv (Payload ServerMsg)
   | ActionWsSend ClientMsg
+
+-------------------------------------------------------------------------------
+-- helpers
+-------------------------------------------------------------------------------
+
+debug :: MisoString -> Transition Model Action
+debug str = io_ (consoleLog str)
+
+doKeys :: IS.IntSet -> Transition Model Action
+doKeys keys
+  | IS.member 37 keys = issue $ ActionWsSend (Play MoveLeft)
+  | IS.member 38 keys = issue $ ActionWsSend (Play MoveUp)
+  | IS.member 39 keys = issue $ ActionWsSend (Play MoveRight)
+  | IS.member 40 keys = issue $ ActionWsSend (Play MoveDown)
+  | otherwise = pure ()
 
 -------------------------------------------------------------------------------
 -- Update
@@ -67,17 +75,18 @@ updateModel (ActionDebug str) =
 
 updateModel (ActionKey keys) = do
   socket <- use modelWs
-  inputName <- strip <$> use modelInputName
-  when (IS.member 13 keys && socket == emptyWebSocket && inputName /= "") $ 
+  name <- strip <$> use modelName
+  when (IS.member 13 keys && socket == emptyWebSocket && name /= "") $ 
     issue ActionConnect
-  -- TODO handle keyboard arrows
+  doKeys keys
 
-updateModel (ActionInputName str) =
-  modelInputName .= str
+updateModel (ActionName str) =
+  modelName .= str
 
 updateModel ActionConnect = do
-  inputName <- strip <$> use modelInputName
-  if inputName == ""
+  modelName %= strip
+  name <- use modelName
+  if name == ""
     then modelError .= "Please, enter a valid name."
     else do
       modelError .= ""
@@ -91,7 +100,7 @@ updateModel (ActionSetBoard str) =
 
 updateModel (ActionWsOpen socket) = do
   modelWs .= socket
-  name <- strip <$> use modelInputName
+  name <- strip <$> use modelName
   issue $ ActionWsSend (Join name)
 
 updateModel (ActionWsClosed c) = do
@@ -102,7 +111,6 @@ updateModel (ActionWsError err) = do
   modelError .= "WebSocket error"
   debug err
 
-  -- TODO
 updateModel (ActionWsRecv payload) =
   case payload of
     JSON json -> case json of
@@ -126,19 +134,19 @@ viewModel m@Model{..} =
   div_ 
     []
     [ h1_ [] [ "miso-maze" ]
-    , maybe viewStarting viewRunning _modelBoard
+    , maybe viewConnect viewRun _modelBoard
     , p_ [] [ text _modelError ]
     ]
 
   where
-    viewStarting =
+    viewConnect =
       div_ []
         [ "Name: "
-        , input_ [ type_ "text", onChange ActionInputName ]
+        , input_ [ type_ "text", onChange ActionName ]
         , button_ [ onClick ActionConnect ] [ "connect" ]
         ]
 
-    viewRunning Board{..} =
+    viewRun Board{..} =
       let 
         w = fromIntegral $ cellSize * _boardNj
         h = fromIntegral $ cellSize * _boardNi
@@ -153,6 +161,7 @@ viewModel m@Model{..} =
             (drawCanvas w h m)
           , div_ [] [ "Board name: " ]    -- TODO
           , div_ [] [ "Remaining meetings: " ]  -- TODO
+          , div_ [] [ "Player name: ", text _modelName ]
           , div_ [] [ "Players:" ]
           , div_ [ CSS.style_ [ CSS.marginLeft "10px" ] ] (map fmtPlayer' _modelPlayers)
           ]

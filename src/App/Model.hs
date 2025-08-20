@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module App.Model where
 
@@ -13,7 +14,7 @@ data Model = Model
   { _modelError :: MisoString
   , _modelWsUrl :: MisoString
   , _modelWs :: WebSocket
-  , _modelInputName :: MisoString
+  , _modelName :: MisoString
   , _modelPlayers :: [Player]
   , _modelBoard :: Maybe Board
   } deriving (Eq)
@@ -25,7 +26,7 @@ mkModel wsUrl = Model
   { _modelError = " "
   , _modelWsUrl = wsUrl
   , _modelWs = emptyWebSocket
-  , _modelInputName = " "
+  , _modelName = " "
   , _modelPlayers = []
   , _modelBoard = Nothing
   }
