@@ -9,8 +9,6 @@ import Miso.WebSocket
 
 import Game.Common
 
--- TODO board name?
-
 data Model = Model
   { _modelError :: MisoString
   , _modelWsUrl :: MisoString

@@ -3,7 +3,7 @@
 
 module Server.WsModel where
 
-import Data.List (intercalate)
+import Data.List (sort)
 import Data.Map qualified as M
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
@@ -14,7 +14,6 @@ import Network.WebSockets qualified as WS
 import System.Directory (listDirectory)
 
 import Game.Game
-
 
 data WsModel = WsModel
   { _wsGame :: Game
@@ -27,8 +26,8 @@ makeLenses ''WsModel
 
 mkWsModel :: FilePath -> IO WsModel
 mkWsModel dir = do
-  mazeFiles <- map (dir++) <$> listDirectory dir
-  putStrLn $ "maze files: " <> intercalate " " mazeFiles
+  mazeFiles <- map (dir++) . sort <$> listDirectory dir
+  putStrLn $ "maze files: " <> unwords mazeFiles
   pure $ WsModel mkGame M.empty " " mazeFiles
 
 nextBoard :: WsModel -> IO WsModel

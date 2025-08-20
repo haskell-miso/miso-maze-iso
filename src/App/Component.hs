@@ -3,8 +3,8 @@
 
 module App.Component where
 
-import Control.Monad
-import Data.Bool
+import Control.Monad (forM_, when)
+import Data.IntSet qualified as IS
 import Miso
 import Miso.Canvas (Canvas, canvas)
 import Miso.Canvas qualified as Canvas 
@@ -36,27 +36,22 @@ wallColor         = CSS.hex 0x2277DD
 debug :: MisoString -> Transition Model Action
 debug str = io_ (consoleLog str)
 
-onEnter :: Action -> Attribute Action
-onEnter action = onKeyDown $ bool ActionNone action . (== KeyCode 13)
--- TODO fix keydown events
--- App -> Component?
--- miso -> startApp
-
 -------------------------------------------------------------------------------
 -- Action
 -------------------------------------------------------------------------------
 
 data Action
-    = ActionNone
-    | ActionDebug MisoString
-    | ActionInputName MisoString
-    | ActionConnect
-    | ActionSetBoard MisoString
-    | ActionWsOpen MisoString WebSocket   -- client name
-    | ActionWsClosed Closed
-    | ActionWsError MisoString
-    | ActionWsRecv (Payload ServerMsg)
-    | ActionWsSend ClientMsg    -- TODO put socket into the model
+  = ActionNone
+  | ActionDebug MisoString
+  | ActionKey IS.IntSet
+  | ActionInputName MisoString
+  | ActionConnect
+  | ActionSetBoard MisoString
+  | ActionWsOpen WebSocket
+  | ActionWsClosed Closed
+  | ActionWsError MisoString
+  | ActionWsRecv (Payload ServerMsg)
+  | ActionWsSend ClientMsg
 
 -------------------------------------------------------------------------------
 -- Update
@@ -70,6 +65,13 @@ updateModel ActionNone =
 updateModel (ActionDebug str) =
   debug str
 
+updateModel (ActionKey keys) = do
+  socket <- use modelWs
+  inputName <- strip <$> use modelInputName
+  when (IS.member 13 keys && socket == emptyWebSocket && inputName /= "") $ 
+    issue ActionConnect
+  -- TODO handle keyboard arrows
+
 updateModel (ActionInputName str) =
   modelInputName .= str
 
@@ -80,23 +82,24 @@ updateModel ActionConnect = do
     else do
       modelError .= ""
       wsUrl <- use modelWsUrl
-      connect wsUrl (ActionWsOpen inputName) ActionWsClosed ActionWsRecv ActionWsError
+      connect wsUrl ActionWsOpen ActionWsClosed ActionWsRecv ActionWsError
 
 updateModel (ActionSetBoard str) =
   case parseBoard str of
     Nothing -> modelError .= "Error: failed to parse board."
     Just board -> modelBoard .= Just board
 
-updateModel (ActionWsOpen name socket) = do
+updateModel (ActionWsOpen socket) = do
   modelWs .= socket
+  name <- strip <$> use modelInputName
   issue $ ActionWsSend (Join name)
 
 updateModel (ActionWsClosed c) = do
-  modelError .= ms (show c)
+  modelError .= "WebSocket closed"
   debug (ms $ show c)
 
 updateModel (ActionWsError err) = do
-  modelError .= "Error: failed to connect websocket."
+  modelError .= "WebSocket error"
   debug err
 
   -- TODO
@@ -132,7 +135,7 @@ viewModel m@Model{..} =
       div_ []
         [ "Name: "
         , input_ [ type_ "text", onChange ActionInputName ]
-        , button_ [ onClick ActionConnect, onEnter ActionConnect ] [ "connect" ]
+        , button_ [ onClick ActionConnect ] [ "connect" ]
         ]
 
     viewRunning Board{..} =
@@ -193,7 +196,6 @@ drawCanvas w h Model{..} () = do
     Canvas.fillStyle (Canvas.color (CSS.hex _playerCol))
     drawCell _playerPos
 
-
 drawBoardCell :: Int -> Int -> Cell -> Canvas ()
 drawBoardCell i j = \case
   CellEmpty -> pure ()
@@ -216,7 +218,7 @@ appComponent :: MisoString -> AppComponent
 appComponent wsUrl = do
   let initialModel = mkModel wsUrl
   (component initialModel updateModel viewModel)
-    { events = defaultEvents <> keyboardEvents
+    { subs = [ keyboardSub ActionKey ]
     , logLevel = DebugAll
     }
 
