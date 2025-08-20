@@ -22,21 +22,18 @@ data WsModel = WsModel
   { _wsGame :: Game
   , _wsClients :: M.Map MisoString WS.Connection
   , _wsCurrentBoard :: MisoString
-  , _wsMazeDir :: MisoString
   , _wsBoardFiles :: [MisoString]
   }
 
 makeLenses ''WsModel
 
-getBoardUrl :: WsModel -> MisoString
-getBoardUrl WsModel{..} = mkStaticUri (_wsMazeDir <> _wsCurrentBoard)
-
 mkWsModel :: MisoString -> IO WsModel
 mkWsModel mazeDir = do
   let dir = T.unpack $ mkStaticUri mazeDir 
-  mazeFiles <- sort . map T.pack <$> listDirectory dir
+      mazeDir' = mazeDir <> "/"
+  mazeFiles <- map ((mazeDir'<>) . T.pack) . sort <$> listDirectory dir
   T.putStrLn $ "maze files: " <> T.unwords mazeFiles
-  let model0 = WsModel mkGame M.empty " " (mazeDir<>"/") mazeFiles
+  let model0 = WsModel mkGame M.empty " " mazeFiles
   nextBoard model0
 
 nextBoard :: WsModel -> IO WsModel
@@ -46,7 +43,7 @@ nextBoard ws@WsModel{..} = do
       T.putStrLn "no more board"
       pure ws
     (f:fs) -> do
-      str' <- T.readFile $ T.unpack $ mkStaticUri (_wsMazeDir <> f)
+      str' <- T.readFile $ T.unpack $ mkStaticUri f
       let str = T.filter (/='"') str'    -- TODO use text files
       case loadBoard str _wsGame of
         Nothing -> do

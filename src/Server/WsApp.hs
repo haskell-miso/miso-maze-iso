@@ -15,6 +15,7 @@ import Network.Wai.Handler.WebSockets (websocketsOr)
 import Network.WebSockets qualified as WS
 
 import Game.Common
+import Network.Api
 import Network.Protocol
 import Server.WsModel
 
@@ -66,7 +67,7 @@ handleRun wsVar conn = do
   -- TODO broadcast players
   sendMsg conn (UpdatePlayers [Player "foo" 16711680 (Position 1 2)])
 
-  boardUrl <- atomically (getBoardUrl <$> readTVar wsVar)
+  boardUrl <- atomically (mkStaticUri . _wsCurrentBoard <$> readTVar wsVar)
   T.putStrLn $ "sending: " <> boardUrl
   sendMsg conn (UpdateBoard boardUrl)
 
