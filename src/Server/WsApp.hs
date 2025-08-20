@@ -65,7 +65,10 @@ handleRun wsVar conn = do
   -- TODO send board to the new client
   -- TODO broadcast players
   sendMsg conn (UpdatePlayers [Player "foo" 16711680 (Position 1 2)])
-  sendMsg conn (UpdateBoard "mazes/maze1.json")
+
+  boardFile <- atomically (_wsCurrentBoard <$> readTVar wsVar)
+  T.putStrLn $ "sending: " <> boardFile
+  sendMsg conn (UpdateBoard boardFile)
 
   forever $ do
     msg <- recvMsg conn

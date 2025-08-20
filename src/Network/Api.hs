@@ -7,7 +7,7 @@ import Miso.String
 import Servant.API
 import Servant.Links
 
-type StaticApi = "pub" :> Raw
+type StaticApi = "public" :> Raw
 
 type PublicApi
   =    StaticApi 

@@ -19,8 +19,8 @@ import Game.Game
 
 data WsModel = WsModel
   { _wsGame :: Game
-  , _wsClients :: M.Map T.Text WS.Connection
-  , _wsCurrentBoard :: T.Text
+  , _wsClients :: M.Map MisoString WS.Connection
+  , _wsCurrentBoard :: MisoString
   , _wsBoardFiles :: [FilePath]
   }
 
@@ -29,20 +29,29 @@ makeLenses ''WsModel
 mkWsModel :: FilePath -> IO WsModel
 mkWsModel dir = do
   mazeFiles <- map (dir++) . sort <$> listDirectory dir
-  putStrLn $ "maze files: " <> unwords mazeFiles
-  pure $ WsModel mkGame M.empty " " mazeFiles
+  T.putStrLn $ "maze files: " <> T.pack (unwords mazeFiles)
+  let model0 = WsModel mkGame M.empty " " mazeFiles
+  nextBoard model0
 
 nextBoard :: WsModel -> IO WsModel
 nextBoard ws@WsModel{..} = do 
   case _wsBoardFiles of
-    [] -> pure ws
+    [] -> do
+      T.putStrLn "no more board"
+      pure ws
     (f:fs) -> do
-      str <- T.readFile f
+      str' <- T.readFile f
+      let str = T.filter (/='"') str'    -- TODO use text files
       case loadBoard str _wsGame of
-        Nothing -> pure ws
-        Just game -> pure $ ws & wsBoardFiles .~ fs ++ [f]
-                               & wsCurrentBoard .~ ms f
-                               & wsGame .~ game
+        Nothing -> do
+          T.putStrLn $ "failed to read: " <> ms f
+          pure ws
+        Just game -> do
+          let boardFile = ms f
+          T.putStrLn $ "new board: " <> boardFile
+          pure $ ws & wsBoardFiles .~ fs ++ [f]
+                    & wsCurrentBoard .~ boardFile
+                    & wsGame .~ game
 
 tryAddClient
   :: MisoString

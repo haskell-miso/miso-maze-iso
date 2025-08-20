@@ -15,7 +15,6 @@ import Miso.WebSocket
 
 import App.Model 
 import Game.Common
-import Network.Api
 import Network.Protocol
 
 -------------------------------------------------------------------------------
@@ -43,7 +42,7 @@ data Action
   | ActionWsOpen WebSocket
   | ActionWsClosed Closed
   | ActionWsError MisoString
-  | ActionWsRecv (Payload ServerMsg)
+  | ActionWsRecv ServerMsg
   | ActionWsSend ClientMsg
 
 -------------------------------------------------------------------------------
@@ -82,7 +81,7 @@ updateModel ActionConnect = do
     else do
       modelError .= ""
       wsUrl <- use modelWsUrl
-      connect wsUrl ActionWsOpen ActionWsClosed ActionWsRecv ActionWsError
+      connectJSON wsUrl ActionWsOpen ActionWsClosed ActionWsRecv ActionWsError
 
 updateModel (ActionSetBoard str) =
   case parseBoard str of
@@ -101,15 +100,13 @@ updateModel (ActionWsError err) = do
   modelError .= "WebSocket error"
   debug err
 
-updateModel (ActionWsRecv payload) =
-  case payload of
-    JSON json -> case json of
-      UpdatePlayers ps -> 
-        modelPlayers .= ps
-      UpdateBoard filename -> 
-        fetch (mkStaticUri filename) "GET" Nothing [] ActionSetBoard ActionDebug
-      Rejected err -> modelError .= "Error: " <> err
-    _ -> debug "ActionWsRecv: unexpected data type"
+updateModel (ActionWsRecv json) =
+  case json of
+    Rejected err -> modelError .= "Error: " <> err
+    UpdatePlayers ps -> modelPlayers .= ps
+    UpdateBoard filename -> do
+      debug $ "fetching: " <> filename
+      fetch filename "GET" Nothing [] ActionSetBoard ActionDebug
 
 updateModel (ActionWsSend msg) = do
   socket <- use modelWs

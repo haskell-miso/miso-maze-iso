@@ -21,7 +21,7 @@ main = do
   
   port <- read . fromMaybe "3000" <$> lookupEnv "PORT"
   putStrLn $ "Running on port " <> show port
-  wsVar <- newTVarIO =<< mkWsModel "./public/mazes/"
+  wsVar <- newTVarIO =<< mkWsModel "public/mazes/"
   run port
     $ logStdout 
     $ wsApp wsVar

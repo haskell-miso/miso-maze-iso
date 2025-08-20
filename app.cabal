@@ -47,9 +47,9 @@ executable server
     Game.Game
     Network.Api
     Network.Protocol
-    Server.WsModel
     Server.ServerApp
     Server.WsApp
+    Server.WsModel
   build-depends: 
     aeson,
     base,
