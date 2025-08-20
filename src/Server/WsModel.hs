@@ -27,7 +27,6 @@ makeLenses ''WsModel
 mkWsModel :: FilePath -> IO WsModel
 mkWsModel dir = do
   files <- map (dir++) <$> listDirectory dir
-  print files -- TODO
   pure $ WsModel mkGame M.empty " " files
 
 nextBoard :: WsModel -> IO WsModel

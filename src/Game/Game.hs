@@ -3,9 +3,6 @@
 
 module Game.Game where
 
-import Data.Set as S
--- import Data.IntMap qualified as IM
--- import Data.Vector qualified as V
 import Miso
 import Miso.Lens
 import Miso.Lens.TH
@@ -55,7 +52,7 @@ tryAddPlayer name g@Game{..} =
       if any ((==name) . _playerName) _gamePlayers
         then Left $ name <> " is already in the maze"
         else Right $ g & gameFreeColors .~ cs
-                       & gamePlayers %~ (Player name pos c :)
+                       & gamePlayers %~ (Player name c pos :)
   where
     pos = Position 1 1  -- TODO random
 

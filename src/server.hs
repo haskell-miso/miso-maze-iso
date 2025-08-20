@@ -11,13 +11,13 @@ import Server.WsModel
 import Server.ServerApp
 import Server.WsApp
 
-import Network.Protocol
-import Data.Aeson
+-- import Network.Protocol
+-- import Data.Aeson
 
 main :: IO ()
 main = do
 
-  print $ encode $ Join "foo bar"
+  -- print $ encode $ Join "foo bar"
   
   port <- read . fromMaybe "3000" <$> lookupEnv "PORT"
   putStrLn $ "Running on port " <> show port

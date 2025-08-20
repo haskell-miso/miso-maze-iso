@@ -33,8 +33,8 @@ instance FromJSON Position
 
 data Player = Player
   { _playerName :: MisoString
-  , _playerPos :: Position
   , _playerCol :: Int
+  , _playerPos :: Position
   } deriving (Eq, Generic, Show)
 
 makeLenses ''Player

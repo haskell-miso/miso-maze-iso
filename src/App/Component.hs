@@ -18,8 +18,6 @@ import Game.Common
 import Network.Api
 import Network.Protocol
 
--- import Language.Javascript.JSaddle    -- TODO
-
 -------------------------------------------------------------------------------
 -- params
 -------------------------------------------------------------------------------
@@ -32,21 +30,33 @@ backgroundColor   = CSS.hex 0x88DD88
 wallColor         = CSS.hex 0x2277DD
 
 -------------------------------------------------------------------------------
+-- helpers
+-------------------------------------------------------------------------------
+
+debug :: MisoString -> Transition Model Action
+debug str = io_ (consoleLog str)
+
+onEnter :: Action -> Attribute Action
+onEnter action = onKeyDown $ bool ActionNone action . (== KeyCode 13)
+-- TODO fix keydown events
+-- App -> Component?
+-- miso -> startApp
+
+-------------------------------------------------------------------------------
 -- Action
 -------------------------------------------------------------------------------
 
 data Action
-    = ActionDebug MisoString
-    | ActionNone
+    = ActionNone
+    | ActionDebug MisoString
     | ActionInputName MisoString
     | ActionConnect
     | ActionSetBoard MisoString
-    | ActionSetPlayers [Player]
     | ActionWsOpen MisoString WebSocket   -- client name
     | ActionWsClosed Closed
     | ActionWsError MisoString
     | ActionWsRecv (Payload ServerMsg)
-    | ActionWsSend WebSocket ClientMsg    -- TODO put socket into the model
+    | ActionWsSend ClientMsg    -- TODO put socket into the model
 
 -------------------------------------------------------------------------------
 -- Update
@@ -54,11 +64,11 @@ data Action
 
 updateModel :: Action -> Transition Model Action
 
-updateModel (ActionDebug str) =
-  io_ (consoleLog str)
-
 updateModel ActionNone =
   pure ()
+
+updateModel (ActionDebug str) =
+  debug str
 
 updateModel (ActionInputName str) =
   modelInputName .= str
@@ -72,36 +82,36 @@ updateModel ActionConnect = do
       wsUrl <- use modelWsUrl
       connect wsUrl (ActionWsOpen inputName) ActionWsClosed ActionWsRecv ActionWsError
 
-      -- TODO
-      fetch (mkStaticUri "mazes/maze1.json") "GET" Nothing [] ActionSetBoard ActionDebug
-      fetch (mkStaticUri "infos1.json") "GET" Nothing [] ActionSetPlayers ActionDebug
-
 updateModel (ActionSetBoard str) =
   case parseBoard str of
     Nothing -> modelError .= "Error: failed to parse board."
     Just board -> modelBoard .= Just board
 
-updateModel (ActionSetPlayers players) =
-  modelPlayers .= players
-
-updateModel (ActionWsOpen name socket) =
-  issue $ ActionWsSend socket (Join name)
+updateModel (ActionWsOpen name socket) = do
+  modelWs .= socket
+  issue $ ActionWsSend (Join name)
 
 updateModel (ActionWsClosed c) = do
   modelError .= ms (show c)
-  issue $ ActionDebug (ms $ show c)
+  debug (ms $ show c)
 
 updateModel (ActionWsError err) = do
   modelError .= "Error: failed to connect websocket."
-  issue $ ActionDebug err
+  debug err
 
   -- TODO
 updateModel (ActionWsRecv payload) =
   case payload of
-    JSON x -> issue $ ActionDebug $ "TODO ActionWsRecv: " <> ms (show x)
-    _ -> issue $ ActionDebug "TODO ActionWsRecv"
+    JSON json -> case json of
+      UpdatePlayers ps -> 
+        modelPlayers .= ps
+      UpdateBoard filename -> 
+        fetch (mkStaticUri filename) "GET" Nothing [] ActionSetBoard ActionDebug
+      Rejected err -> modelError .= "Error: " <> err
+    _ -> debug "ActionWsRecv: unexpected data type"
 
-updateModel (ActionWsSend socket msg) =
+updateModel (ActionWsSend msg) = do
+  socket <- use modelWs
   sendJSON socket msg
 
 -------------------------------------------------------------------------------
@@ -113,16 +123,11 @@ viewModel m@Model{..} =
   div_ 
     []
     [ h1_ [] [ "miso-maze" ]
-    , viewMain
+    , maybe viewStarting viewRunning _modelBoard
     , p_ [] [ text _modelError ]
     ]
 
   where
-    viewMain =
-      case (_modelPlayers, _modelBoard) of
-        (players@(_:_), Just board) -> viewRunning players board
-        _ -> viewStarting
-
     viewStarting =
       div_ []
         [ "Name: "
@@ -130,7 +135,7 @@ viewModel m@Model{..} =
         , button_ [ onClick ActionConnect, onEnter ActionConnect ] [ "connect" ]
         ]
 
-    viewRunning players Board{..} =
+    viewRunning Board{..} =
       let 
         w = fromIntegral $ cellSize * _boardNj
         h = fromIntegral $ cellSize * _boardNi
@@ -146,7 +151,7 @@ viewModel m@Model{..} =
           , div_ [] [ "Board name: " ]    -- TODO
           , div_ [] [ "Remaining meetings: " ]  -- TODO
           , div_ [] [ "Players:" ]
-          , div_ [ CSS.style_ [ CSS.marginLeft "10px" ] ] (map fmtPlayer' players)
+          , div_ [ CSS.style_ [ CSS.marginLeft "10px" ] ] (map fmtPlayer' _modelPlayers)
           ]
 
     fmtPlayer' Player{..} =
@@ -200,16 +205,6 @@ drawCell (Position i j) =
 
 cellSizeD :: Double
 cellSizeD = fromIntegral cellSize
-
--------------------------------------------------------------------------------
--- helpers
--------------------------------------------------------------------------------
-
-onEnter :: Action -> Attribute Action
-onEnter action = onKeyDown $ bool ActionNone action . (== KeyCode 13)
--- TODO fix keydown events
--- App -> Component?
--- miso -> startApp
 
 -------------------------------------------------------------------------------
 -- Component

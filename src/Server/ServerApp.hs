@@ -13,7 +13,6 @@ import Servant
 import App.Component 
 import App.Model
 import Network.Api
-import Network.Protocol
 
 -------------------------------------------------------------------------------
 -- server routing
