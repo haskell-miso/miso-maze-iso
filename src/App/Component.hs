@@ -4,6 +4,7 @@
 module App.Component where
 
 import Control.Monad
+import Data.Bool
 import Miso
 import Miso.Canvas (Canvas, canvas)
 import Miso.Canvas qualified as Canvas 
@@ -17,7 +18,7 @@ import Game.Common
 import Network.Api
 import Network.Protocol
 
-import Language.Javascript.JSaddle    -- TODO
+-- import Language.Javascript.JSaddle    -- TODO
 
 -------------------------------------------------------------------------------
 -- params
@@ -35,19 +36,17 @@ wallColor         = CSS.hex 0x2277DD
 -------------------------------------------------------------------------------
 
 data Action
-    = ActionError MisoString
+    = ActionDebug MisoString
+    | ActionNone
     | ActionInputName MisoString
     | ActionConnect
     | ActionSetBoard MisoString
     | ActionSetPlayers [Player]
-    | ActionWsOpen MisoString WebSocket
+    | ActionWsOpen MisoString WebSocket   -- client name
     | ActionWsClosed Closed
-    | ActionWsMessage JSVal
-    | ActionWsError JSVal
-    | ActionSend WebSocket JSVal
-    | ActionDebugStr MisoString
-    | ActionDebugVal JSVal
-    -- TODO avoid JSVal?
+    | ActionWsError MisoString
+    | ActionWsRecv (Payload ServerMsg)
+    | ActionWsSend WebSocket ClientMsg    -- TODO put socket into the model
 
 -------------------------------------------------------------------------------
 -- Update
@@ -55,8 +54,11 @@ data Action
 
 updateModel :: Action -> Transition Model Action
 
-updateModel (ActionError str) =
-  modelError .= str
+updateModel (ActionDebug str) =
+  io_ (consoleLog str)
+
+updateModel ActionNone =
+  pure ()
 
 updateModel (ActionInputName str) =
   modelInputName .= str
@@ -68,52 +70,39 @@ updateModel ActionConnect = do
     else do
       modelError .= ""
       wsUrl <- use modelWsUrl
-      connect wsUrl (ActionWsOpen inputName) ActionWsClosed ActionWsMessage ActionWsError
+      connect wsUrl (ActionWsOpen inputName) ActionWsClosed ActionWsRecv ActionWsError
 
       -- TODO
-      fetch (mkStaticUri "mazes/maze1.json") "GET" Nothing [] ActionSetBoard ActionError
-      fetch (mkStaticUri "infos1.json") "GET" Nothing [] ActionSetPlayers ActionError
+      fetch (mkStaticUri "mazes/maze1.json") "GET" Nothing [] ActionSetBoard ActionDebug
+      fetch (mkStaticUri "infos1.json") "GET" Nothing [] ActionSetPlayers ActionDebug
 
 updateModel (ActionSetBoard str) =
   case parseBoard str of
-    Nothing -> modelError .= "error: failed to parse board"
+    Nothing -> modelError .= "Error: failed to parse board."
     Just board -> modelBoard .= Just board
 
 updateModel (ActionSetPlayers players) =
   modelPlayers .= players
 
 updateModel (ActionWsOpen name socket) =
-  -- io (ActionSend socket <$> toJSVal name)
-  io (ActionSend socket <$> toJSVal (jsonStringify $ Join name))
+  issue $ ActionWsSend socket (Join name)
 
-updateModel (ActionSend socket val) = do
-  issue (ActionDebugVal val)
-  send socket val
-  -- issue $ ActionWsError val
+updateModel (ActionWsClosed c) = do
+  modelError .= ms (show c)
+  issue $ ActionDebug (ms $ show c)
 
-updateModel (ActionWsClosed _) =
-  pure ()
+updateModel (ActionWsError err) = do
+  modelError .= "Error: failed to connect websocket."
+  issue $ ActionDebug err
 
-updateModel (ActionWsMessage _) =
-  pure ()
+  -- TODO
+updateModel (ActionWsRecv payload) =
+  case payload of
+    JSON x -> issue $ ActionDebug $ "TODO ActionWsRecv: " <> ms (show x)
+    _ -> issue $ ActionDebug "TODO ActionWsRecv"
 
-updateModel (ActionWsError val) =
-#ifdef WASM
-  io (ActionError <$> valToStr val)
-#else
-  io (ActionError <$> valToText val)
-#endif
-
-updateModel (ActionDebugStr str) =
-  io_ $ consoleLog str
-
-updateModel (ActionDebugVal val) =
-#ifdef WASM
-  io (ActionDebugStr <$> valToStr val)
-#else
-  io (ActionDebugStr <$> valToText val)
-#endif
-
+updateModel (ActionWsSend socket msg) =
+  sendJSON socket msg
 
 -------------------------------------------------------------------------------
 -- View
@@ -138,7 +127,7 @@ viewModel m@Model{..} =
       div_ []
         [ "Name: "
         , input_ [ type_ "text", onChange ActionInputName ]
-        , button_ [ onClick ActionConnect ] [ "connect" ]
+        , button_ [ onClick ActionConnect, onEnter ActionConnect ] [ "connect" ]
         ]
 
     viewRunning players Board{..} =
@@ -213,6 +202,16 @@ cellSizeD :: Double
 cellSizeD = fromIntegral cellSize
 
 -------------------------------------------------------------------------------
+-- helpers
+-------------------------------------------------------------------------------
+
+onEnter :: Action -> Attribute Action
+onEnter action = onKeyDown $ bool ActionNone action . (== KeyCode 13)
+-- TODO fix keydown events
+-- App -> Component?
+-- miso -> startApp
+
+-------------------------------------------------------------------------------
 -- Component
 -------------------------------------------------------------------------------
 
@@ -222,5 +221,7 @@ appComponent :: MisoString -> AppComponent
 appComponent wsUrl = do
   let initialModel = mkModel wsUrl
   (component initialModel updateModel viewModel)
-    { logLevel = DebugAll }
+    { events = defaultEvents <> keyboardEvents
+    , logLevel = DebugAll
+    }
 

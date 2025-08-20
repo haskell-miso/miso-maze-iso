@@ -6,7 +6,9 @@ import Network.URI
 
 import App.Component (appComponent)
 
+#ifdef WASM
 foreign export javascript "hs_start" main :: IO ()
+#endif
 
 main :: IO ()
 main = run (miso (appComponent . uri2url))
