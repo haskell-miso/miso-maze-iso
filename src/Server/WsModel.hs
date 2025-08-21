@@ -43,8 +43,7 @@ nextBoard ws@WsModel{..} = do
       T.putStrLn "no more board"
       pure ws
     (f:fs) -> do
-      str' <- T.readFile $ T.unpack $ mkStaticUri f
-      let str = T.filter (/='"') str'    -- TODO use text files
+      str <- T.readFile $ T.unpack $ mkStaticUri f
       case loadBoard str _wsGame of
         Nothing -> do
           T.putStrLn $ "failed to read: " <> f

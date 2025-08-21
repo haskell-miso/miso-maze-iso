@@ -15,7 +15,6 @@ import Miso.WebSocket
 
 import App.Model 
 import Game.Common
-import Network.Api
 import Network.Protocol
 
 -------------------------------------------------------------------------------
@@ -107,7 +106,8 @@ updateModel (ActionWsRecv json) =
     UpdatePlayers ps -> modelPlayers .= ps
     UpdateBoard url -> do
       debug url 
-      fetch url "GET" Nothing [] ActionSetBoard ActionDebug
+      getText url [] ActionSetBoard ActionDebug
+      -- fetch url "GET" Nothing [] ActionSetBoard ActionDebug
 
 updateModel (ActionWsSend msg) = do
   socket <- use modelWs
