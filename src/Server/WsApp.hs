@@ -35,14 +35,11 @@ sendMsg conn = WS.sendTextData conn . T.decodeUtf8 . B.toStrict . encode
 
 broadcastPlayers :: TVar WsModel -> IO ()
 broadcastPlayers wsVar = do
-  (names, conns, players) <- atomically $ do
+  (game, conns) <- atomically $ do
     ws <- readTVar wsVar
-    let ns = ws ^. wsGame & getPlayerNames
-        cs = ws ^. wsClients & M.elems
-        ps = ws ^. wsGame & getPlayers
-    pure (ns, cs, ps)
-  T.putStrLn $ "broadcasting to: " <> T.unwords names
-  forM_ conns $ flip sendMsg (UpdatePlayers players)
+    pure (ws^.wsGame, ws^.wsClients&M.elems)
+  T.putStrLn $ "broadcasting to: " <> T.unwords (getPlayerNames game)
+  forM_ conns $ flip sendMsg (UpdateInfos (_gameRemMeetings game) (getPlayers game))
 
 playClientMove :: TVar WsModel -> MisoString -> Move -> IO ()
 playClientMove wsVar name move = do

@@ -101,7 +101,9 @@ playMove name move g =
           i1 = i0 + di
           j1 = j0 + dj
       in if i1 >= 0 && i1 < ni && j1 >= 0 && j1 < nj
-        then Just $ g & gameInfoPlayer %~ M.adjust (\i -> i & infoPos .~ Position i1 j1) name
+        then Just $ g & gameInfoPlayer %~ M.adjust (\i -> i 
+                      & infoPos .~ Position i1 j1) name
+                      & gameRemMeetings %~ subtract 1
         else Nothing
 
   -- TODO

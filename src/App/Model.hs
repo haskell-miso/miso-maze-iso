@@ -16,7 +16,9 @@ data Model = Model
   , _modelWs :: WebSocket
   , _modelName :: MisoString
   , _modelPlayers :: [Player]
-  , _modelBoard :: Maybe Board
+  , _modelBoard :: Board
+  , _modelBoardName :: MisoString
+  , _modelRemMeetings :: Int
   } deriving (Eq)
 
 makeLenses ''Model
@@ -28,6 +30,8 @@ mkModel wsUrl = Model
   , _modelWs = emptyWebSocket
   , _modelName = " "
   , _modelPlayers = []
-  , _modelBoard = Nothing
+  , _modelBoard = emptyBoard
+  , _modelBoardName = " "
+  , _modelRemMeetings = 0
   }
 

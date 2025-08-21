@@ -3,7 +3,7 @@
 
 module App.Component where
 
-import Control.Monad (forM_)
+import Control.Monad (forM_, when)
 import Data.IntSet qualified as IS
 import Miso
 import Miso.Canvas (Canvas, canvas)
@@ -38,7 +38,7 @@ data Action
   | ActionKey IS.IntSet
   | ActionName MisoString
   | ActionConnect
-  | ActionSetBoard MisoString
+  | ActionSetBoard MisoString MisoString    -- url, data
   | ActionWsOpen WebSocket
   | ActionWsClosed Closed
   | ActionWsError MisoString
@@ -83,10 +83,12 @@ updateModel ActionConnect = do
       wsUrl <- use modelWsUrl
       connectJSON wsUrl ActionWsOpen ActionWsClosed ActionWsRecv ActionWsError
 
-updateModel (ActionSetBoard str) =
+updateModel (ActionSetBoard url str) =
   case parseBoard str of
     Nothing -> modelError .= "Error: failed to parse board."
-    Just board -> modelBoard .= Just board
+    Just board -> do
+      modelBoard .= board
+      modelBoardName .= url
 
 updateModel (ActionWsOpen socket) = do
   modelWs .= socket
@@ -103,10 +105,12 @@ updateModel (ActionWsError err) = do
 updateModel (ActionWsRecv json) =
   case json of
     Rejected err -> modelError .= "Error: " <> err
-    UpdatePlayers ps -> modelPlayers .= ps
+    UpdateInfos n ps -> do
+      modelRemMeetings .= n
+      modelPlayers .= ps
     UpdateBoard url -> do
       debug url 
-      getText url [] ActionSetBoard ActionDebug
+      getText url [] (ActionSetBoard url) ActionDebug
 
 updateModel (ActionWsSend msg) = do
   socket <- use modelWs
@@ -121,7 +125,7 @@ viewModel m@Model{..} =
   div_ 
     []
     [ h1_ [] [ "miso-maze" ]
-    , maybe viewConnect viewRun _modelBoard
+    , if _modelBoard == emptyBoard then viewConnect else viewRun _modelBoard
     , p_ [] [ text _modelError ]
     ]
 
@@ -146,9 +150,9 @@ viewModel m@Model{..} =
               ]
             initCanvas
             (drawCanvas w h m)
-          , div_ [] [ "Board name: " ]    -- TODO
-          , div_ [] [ "Remaining meetings: " ]  -- TODO
-          , div_ [] [ "Player name: ", text _modelName ]
+          , div_ [] [ "Player: ", text _modelName ]
+          , div_ [] [ "Remaining meetings: ", text (ms $ show _modelRemMeetings) ]
+          , div_ [] [ "Board: ", text _modelBoardName ]
           , div_ [] [ "Players:" ]
           , div_ [ CSS.style_ [ CSS.marginLeft "10px" ] ] (map fmtPlayer' _modelPlayers)
           ]
@@ -186,7 +190,8 @@ drawCanvas w h Model{..} () = do
   Canvas.fillRect (0, 0, w, h)
 
   Canvas.fillStyle (Canvas.color wallColor)
-  forM_ _modelBoard (`forBoard` drawBoardCell)
+  when (_modelBoard /= emptyBoard) $
+    forBoard _modelBoard drawBoardCell
 
   forM_ _modelPlayers $ \Player{..} -> do
     Canvas.fillStyle (Canvas.color (CSS.hex _playerCol))

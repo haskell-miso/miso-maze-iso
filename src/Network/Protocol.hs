@@ -11,7 +11,7 @@ import Game.Common
 data ServerMsg
   = Rejected MisoString
   | UpdateBoard MisoString
-  | UpdatePlayers [Player]
+  | UpdateInfos Int [Player]    -- remaining meetings, players
   deriving (Eq, Generic, Show)
 
 instance ToJSON ServerMsg where

@@ -12,7 +12,6 @@ executable app
     App.Component
     App.Model
     Game.Common
-    Game.Game
     Network.Protocol
     Network.Api
   build-depends: 
