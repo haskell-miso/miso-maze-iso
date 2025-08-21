@@ -3,6 +3,7 @@
 
 module Game.Game where
 
+import Data.Map qualified as M
 import Miso hiding (go)
 import Miso.Lens
 import Miso.Lens.TH
@@ -28,9 +29,16 @@ nbMeetings = 10
 -- types
 -------------------------------------------------------------------------------
 
+data InfoPlayer = InfoPlayer
+  { _infoPos :: Position
+  , _infoCol :: Int
+  } deriving (Eq)
+
+makeLenses ''InfoPlayer
+
 data Game = Game
   { _gameBoard :: Board
-  , _gamePlayers :: [Player]    -- TODO M.Map MisoString (Position, Int)
+  , _gameInfoPlayer :: M.Map MisoString InfoPlayer
   , _gameFreeColors :: [Int]
   , _gameRemMeetings :: Int
   } deriving (Eq)
@@ -42,27 +50,27 @@ makeLenses ''Game
 -------------------------------------------------------------------------------
 
 mkGame :: Game
-mkGame = Game emptyBoard [] playerColors nbMeetings
+mkGame = Game emptyBoard M.empty playerColors nbMeetings
 
 tryAddPlayer :: MisoString -> Game -> Either MisoString Game
 tryAddPlayer name g@Game{..} =
   case _gameFreeColors of
     [] -> Left "the maze is full"
     (c:cs) -> 
-      if any ((==name) . _playerName) _gamePlayers
+      if M.member name _gameInfoPlayer
         then Left $ name <> " is already in the maze"
         else Right $ g & gameFreeColors .~ cs
-                       & gamePlayers %~ (Player name c pos :)
+                       & gameInfoPlayer %~ M.insert name (InfoPlayer pos c)
   where
     pos = Position 1 1  -- TODO random
 
 deletePlayer :: MisoString -> Game -> Game
 deletePlayer name g@Game{..} =
-  case extractPlayer name _gamePlayers of
+  case M.lookup name _gameInfoPlayer of
     Nothing -> g
-    Just (p, ps) -> 
-      g & gamePlayers .~ ps                     -- remove the player
-        & gameFreeColors %~ (_playerCol p :)    -- free the player color
+    Just info -> 
+      g & gameInfoPlayer %~ M.delete name          -- remove the player
+        & gameFreeColors %~ (_infoCol info :)   -- free the player color
 
 loadBoard :: MisoString -> Game -> Maybe Game
 loadBoard str g =
@@ -75,26 +83,25 @@ loadBoard str g =
 
 playMove :: MisoString -> Move -> Game -> Maybe Game
 playMove name move g =
-  case (filter ((==name) . _playerName) (g^.gamePlayers), isRunning g) of
-    ([player], True) -> 
+  case (M.lookup name (_gameInfoPlayer g), isRunning g) of
+    (Just info, True) -> 
       case move of
-        MoveLeft  -> go player ( 0, -1)
-        MoveRight -> go player ( 0,  1)
-        MoveUp    -> go player (-1,  0)
-        MoveDown  -> go player ( 1,  0)
+        MoveLeft  -> go info ( 0, -1)
+        MoveRight -> go info ( 0,  1)
+        MoveUp    -> go info (-1,  0)
+        MoveDown  -> go info ( 1,  0)
     _ -> Nothing
 
   where
-    go :: Player -> (Int, Int) -> Maybe Game
-    go p (di, dj) = 
+    go :: InfoPlayer -> (Int, Int) -> Maybe Game
+    go info (di, dj) = 
       let ni = g ^. gameBoard ^. boardNi
           nj = g ^. gameBoard ^. boardNj
-          (Position i0 j0) = p ^. playerPos
+          (Position i0 j0) = _infoPos info
           i1 = i0 + di
           j1 = j0 + dj
-          upPos pp = if pp^.playerName == name then pp&playerPos .~ Position i1 j1 else pp
       in if i1 >= 0 && i1 < ni && j1 >= 0 && j1 < nj
-        then Just $ g & gamePlayers %~ map upPos
+        then Just $ g & gameInfoPlayer %~ M.adjust (\i -> i & infoPos .~ Position i1 j1) name
         else Nothing
 
   -- TODO
@@ -102,17 +109,15 @@ playMove name move g =
 isRunning :: Game -> Bool
 isRunning Game{..} = _gameRemMeetings > 0
 
+getPlayers :: Game -> [Player]
+getPlayers Game{..} = M.foldrWithKey' f [] _gameInfoPlayer
+  where
+    f name (InfoPlayer pos col) acc = Player name col pos : acc
+
+getPlayerNames :: Game -> [MisoString]
+getPlayerNames = M.keys . _gameInfoPlayer
+
 -------------------------------------------------------------------------------
 -- internal
 -------------------------------------------------------------------------------
-
--- TODO test
-extractPlayer :: MisoString -> [Player] -> Maybe (Player, [Player])
-extractPlayer name = go []
-  where
-    go _ [] = Nothing
-    go acc (p:ps) =
-      if _playerName p == name
-        then Just (p, acc++ps)
-        else go (acc++[p]) ps
 
