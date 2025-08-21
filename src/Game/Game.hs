@@ -78,7 +78,7 @@ loadBoard str g =
     Nothing -> Nothing
     Just b -> Just $ g & gameBoard .~ b
                        & gameRemMeetings .~ nbMeetings
-  -- TODO reset player positions
+  -- TODO reset player positions randomly
 
 
 playMove :: MisoString -> Move -> Game -> Maybe Game
@@ -103,10 +103,11 @@ playMove name move g =
       in if i1 >= 0 && i1 < ni && j1 >= 0 && j1 < nj
         then Just $ g & gameInfoPlayer %~ M.adjust (\i -> i 
                       & infoPos .~ Position i1 j1) name
-                      & gameRemMeetings %~ subtract 1
+                      & gameRemMeetings %~ subtract 1   -- TODO for testing, to be removed
         else Nothing
 
-  -- TODO
+  -- TODO wall collision
+  -- TODO player meeting: score, reset player positions
 
 isRunning :: Game -> Bool
 isRunning Game{..} = _gameRemMeetings > 0

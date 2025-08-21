@@ -51,12 +51,8 @@ playClientMove wsVar name move = do
         writeTVar wsVar (ws & wsGame .~ game)
         pure True
   when up $ broadcastPlayers wsVar
-
-  -- playWsMove wsVar name move
-  -- TODO play move 
-  -- if move ok, broadcast players
-  -- if move ok and new board, load board + broadcast board and players
-  -- else nothing
+  -- TODO if move ok, broadcast players
+  -- TODO if move ok and new board, load board + broadcast board and players
   T.putStrLn $ name <> " plays " <> T.pack (show move)
 
 -------------------------------------------------------------------------------
