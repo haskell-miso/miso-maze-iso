@@ -4,7 +4,7 @@ module Server.WsApp (wsApp) where
 
 import Control.Concurrent.STM
 import Control.Exception (finally)
-import Control.Monad (forever, forM_)
+import Control.Monad (forever, forM_, when)
 import Data.Aeson
 import Data.ByteString.Lazy qualified as B
 import Data.Map qualified as M
@@ -42,6 +42,24 @@ broadcastPlayers wsVar = do
     pure (ps, cs)
   T.putStrLn $ "broadcasting to: " <> T.unwords (map _playerName players)
   forM_ conns $ flip sendMsg (UpdatePlayers players)
+
+playClientMove :: TVar WsModel -> MisoString -> Move -> IO ()
+playClientMove wsVar name move = do
+  up <- atomically $ do
+    ws <- readTVar wsVar
+    case playMove name move (ws^.wsGame) of
+      Nothing -> pure False
+      Just game -> do
+        writeTVar wsVar (ws & wsGame .~ game)
+        pure True
+  when up $ broadcastPlayers wsVar
+
+  -- playWsMove wsVar name move
+  -- TODO play move 
+  -- if move ok, broadcast players
+  -- if move ok and new board, load board + broadcast board and players
+  -- else nothing
+  T.putStrLn $ name <> " plays " <> T.pack (show move)
 
 -------------------------------------------------------------------------------
 -- handlers
@@ -87,12 +105,7 @@ handleRun wsVar name conn = do
   forever $ do
     msg <- recvMsg conn
     case msg of
-      Just (Play move) -> do
-        T.putStrLn $ name <> " plays " <> T.pack (show move)
-        pure ()
-        -- TODO play move
-        -- if new board, broadcast board
-        -- broadcast players
+      Just (Play move) -> playClientMove wsVar name move
       _ -> T.putStrLn "ignored: expecting Play"
 
 

@@ -73,6 +73,9 @@ data Board = Board
 
 makeLenses ''Board
 
+emptyBoard :: Board
+emptyBoard = Board 0 0 empty
+
 forBoard :: (Monad m) => Board -> (Int -> Int -> Cell -> m ()) -> m ()
 forBoard Board{..} f = 
   V.iforM_ _boardData $ \k c -> 

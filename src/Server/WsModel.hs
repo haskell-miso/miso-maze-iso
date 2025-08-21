@@ -71,3 +71,4 @@ tryAddClient name conn wsVar = do
       writeTVar wsVar ws'
       pure $ Right name'
 
+
