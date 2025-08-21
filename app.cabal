@@ -59,6 +59,7 @@ executable server
     jsaddle,
     miso,
     network-uri,
+    random,
     servant,
     servant-server,
     stm,
