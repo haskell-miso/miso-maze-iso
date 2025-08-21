@@ -99,11 +99,10 @@ playMove name move g =
       case tryMove (_gameBoard g) (_infoPos info) dij of
         Nothing -> Nothing
         Just ij1 ->
-          Just $ g & gameInfoPlayer %~ M.adjust (\i -> i & infoPos .~ ij1) name
-                   & gameRemMeetings %~ subtract 1   -- TODO for testing, to be removed
-
-  -- TODO wall collision
-  -- TODO player meeting: score, reset player positions
+          if isMeeting name ij1 g
+            then Just $ g & gameRemMeetings %~ subtract 1
+              -- TODO reset player positions
+            else Just $ g & gameInfoPlayer %~ M.adjust (\i -> i & infoPos .~ ij1) name
 
 isRunning :: Game -> Bool
 isRunning Game{..} = _gameRemMeetings > 0
@@ -130,4 +129,8 @@ tryMove Board{..} ij0 dij =
     ij1@(Position i1 j1) = ij0 + dij
     c = _boardData V.! ij2k nj (i1, j1)
 
+isMeeting :: MisoString -> Position -> Game -> Bool
+isMeeting name ij1 Game{..} = M.foldrWithKey' f False _gameInfoPlayer
+  where
+    f n (InfoPlayer ij _) acc = acc || n/=name && ij==ij1
 
