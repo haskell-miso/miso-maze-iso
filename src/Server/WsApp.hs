@@ -38,21 +38,39 @@ broadcastPlayers wsVar = do
   (game, conns) <- atomically $ do
     ws <- readTVar wsVar
     pure (ws^.wsGame, ws^.wsClients&M.elems)
-  T.putStrLn $ "broadcasting to: " <> T.unwords (getPlayerNames game)
+  T.putStrLn $ "broadcastPlayers to: " <> T.unwords (getPlayerNames game)
   forM_ conns $ flip sendMsg (UpdateInfos (_gameRemMeetings game) (getPlayers game))
+
+broadcastBoard :: TVar WsModel -> IO ()
+broadcastBoard wsVar = do
+  (currentBoard, conns, names) <- atomically $ do
+    ws <- readTVar wsVar
+    pure (ws^.wsCurrentBoard, ws^.wsClients&M.elems, ws^.wsGame&getPlayerNames)
+  T.putStrLn $ "broadcastBoard to: " <> T.unwords names
+  let boardUrl = mkStaticUri currentBoard
+  forM_ conns $ flip sendMsg (UpdateBoard boardUrl)
 
 playClientMove :: TVar WsModel -> MisoString -> Move -> IO ()
 playClientMove wsVar name move = do
-  up <- atomically $ do
+
+  (gameChanged, gameOver) <- atomically $ do
     ws <- readTVar wsVar
     case playMove name move (ws^.wsGame) of
-      Nothing -> pure False
+      Nothing -> pure (False, False)
       Just game -> do
         writeTVar wsVar (ws & wsGame .~ game)
-        pure True
-  when up $ broadcastPlayers wsVar
-  -- TODO if move ok, broadcast players
-  -- TODO if move ok and new board, load board + broadcast board and players
+        pure (True, not $ isRunning game)
+
+  when gameChanged $ do
+    when gameOver $ do
+      -- TODO race condition?
+      model <- readTVarIO wsVar
+      model' <- nextBoard model
+      atomically $ writeTVar wsVar model'
+      broadcastBoard wsVar
+
+    broadcastPlayers wsVar
+
   T.putStrLn $ name <> " plays " <> T.pack (show move)
 
 -------------------------------------------------------------------------------
@@ -101,7 +119,6 @@ handleRun wsVar name conn = do
     case msg of
       Just (Play move) -> playClientMove wsVar name move
       _ -> T.putStrLn "ignored: expecting Play"
-
 
 -------------------------------------------------------------------------------
 -- apps

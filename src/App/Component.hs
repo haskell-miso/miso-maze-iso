@@ -96,11 +96,12 @@ updateModel (ActionWsOpen socket) = do
   issue $ ActionWsSend (Join name)
 
 updateModel (ActionWsClosed c) = do
-  debug (ms $ show c)
+  debug $ "updateModel ActionWsClosed: " <> ms (show c)
+  modelPlayers .= []
 
 updateModel (ActionWsError err) = do
   modelError .= "WebSocket error"
-  debug err
+  debug $ "updateModel ActionWsError: " <> err
 
 updateModel (ActionWsRecv json) =
   case json of
@@ -109,7 +110,7 @@ updateModel (ActionWsRecv json) =
       modelRemMeetings .= n
       modelPlayers .= ps
     UpdateBoard url -> do
-      debug url 
+      debug $ "updateModel ActionWsRecv: " <> url 
       getText url [] (ActionSetBoard url) ActionDebug
 
 updateModel (ActionWsSend msg) = do
