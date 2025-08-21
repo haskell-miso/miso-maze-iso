@@ -4,6 +4,7 @@
 module Game.Game where
 
 import Data.Map qualified as M
+import Data.Vector qualified as V
 import Miso hiding (go)
 import Miso.Lens
 import Miso.Lens.TH
@@ -86,25 +87,20 @@ playMove name move g =
   case (M.lookup name (_gameInfoPlayer g), isRunning g) of
     (Just info, True) -> 
       case move of
-        MoveLeft  -> go info ( 0, -1)
-        MoveRight -> go info ( 0,  1)
-        MoveUp    -> go info (-1,  0)
-        MoveDown  -> go info ( 1,  0)
+        MoveLeft  -> go info $ Position 0 (-1)
+        MoveRight -> go info $ Position 0 1
+        MoveUp    -> go info $ Position (-1) 0
+        MoveDown  -> go info $ Position 1 0
     _ -> Nothing
 
   where
-    go :: InfoPlayer -> (Int, Int) -> Maybe Game
-    go info (di, dj) = 
-      let ni = g ^. gameBoard ^. boardNi
-          nj = g ^. gameBoard ^. boardNj
-          (Position i0 j0) = _infoPos info
-          i1 = i0 + di
-          j1 = j0 + dj
-      in if i1 >= 0 && i1 < ni && j1 >= 0 && j1 < nj
-        then Just $ g & gameInfoPlayer %~ M.adjust (\i -> i 
-                      & infoPos .~ Position i1 j1) name
-                      & gameRemMeetings %~ subtract 1   -- TODO for testing, to be removed
-        else Nothing
+    go :: InfoPlayer -> Position -> Maybe Game
+    go info dij = 
+      case tryMove (_gameBoard g) (_infoPos info) dij of
+        Nothing -> Nothing
+        Just ij1 ->
+          Just $ g & gameInfoPlayer %~ M.adjust (\i -> i & infoPos .~ ij1) name
+                   & gameRemMeetings %~ subtract 1   -- TODO for testing, to be removed
 
   -- TODO wall collision
   -- TODO player meeting: score, reset player positions
@@ -123,4 +119,15 @@ getPlayerNames = M.keys . _gameInfoPlayer
 -------------------------------------------------------------------------------
 -- internal
 -------------------------------------------------------------------------------
+
+tryMove :: Board -> Position -> Position -> Maybe Position
+tryMove Board{..} ij0 dij =
+  if i1 >= 0 && i1 < ni && j1 >= 0 && j1 < nj && c == CellEmpty
+    then Just ij1
+    else Nothing
+  where
+    (ni, nj) = _boardNiNj
+    ij1@(Position i1 j1) = ij0 + dij
+    c = _boardData V.! ij2k nj (i1, j1)
+
 

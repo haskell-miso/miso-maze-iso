@@ -26,6 +26,14 @@ data Position = Position
 
 makeLenses ''Position
 
+instance Num Position where
+  Position ia ja + Position ib jb = Position (ia+ib) (ja+jb)
+  Position ia ja * Position ib jb = Position (ia*ib) (ja*jb)
+  abs (Position i j) = Position (abs i) (abs j)
+  signum (Position i j) = Position (signum i) (signum j)
+  negate (Position i j) = Position (negate i) (negate j)
+  fromInteger n = Position (fromInteger n) (fromInteger n)
+
 instance ToJSON Position where
     toEncoding = genericToEncoding Aeson.defaultOptions
 
@@ -66,20 +74,19 @@ data Cell
   deriving (Eq, Show)
 
 data Board = Board
-  { _boardNi :: Int
-  , _boardNj :: Int
+  { _boardNiNj :: (Int, Int)
   , _boardData :: V.Vector Cell
   } deriving (Eq, Show)
 
 makeLenses ''Board
 
 emptyBoard :: Board
-emptyBoard = Board 0 0 empty
+emptyBoard = Board (0, 0) empty
 
 forBoard :: (Monad m) => Board -> (Int -> Int -> Cell -> m ()) -> m ()
 forBoard Board{..} f = 
   V.iforM_ _boardData $ \k c -> 
-    let (i, j) = k2ij _boardNj k
+    let (i, j) = k2ij (snd _boardNiNj) k
     in f i j c
 
 ij2k :: Int -> (Int, Int) -> Int
@@ -123,7 +130,7 @@ parserBoard = do
   nj <- parseNb
   cells <- parseCells
   guard (ni*nj == V.length cells)
-  pure $ Board ni nj cells
+  pure $ Board (ni, nj) cells
 
   where
 

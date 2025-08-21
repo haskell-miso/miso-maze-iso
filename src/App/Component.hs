@@ -140,8 +140,9 @@ viewModel m@Model{..} =
 
     viewRun Board{..} =
       let 
-        w = fromIntegral $ cellSize * _boardNj
-        h = fromIntegral $ cellSize * _boardNi
+        (ni, nj) = _boardNiNj
+        w = fromIntegral $ cellSize * nj
+        h = fromIntegral $ cellSize * ni
       in div_ []
           [ p_ [] [ "Meet other players, using keyboard arrows." ]
           , canvas 
