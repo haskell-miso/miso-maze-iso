@@ -3,7 +3,7 @@
 
 module Game.Game where
 
-import Miso
+import Miso hiding (go)
 import Miso.Lens
 import Miso.Lens.TH
 
@@ -56,6 +56,14 @@ tryAddPlayer name g@Game{..} =
   where
     pos = Position 1 1  -- TODO random
 
+deletePlayer :: MisoString -> Game -> Game
+deletePlayer name g@Game{..} =
+  case extractPlayer name _gamePlayers of
+    Nothing -> g
+    Just (p, ps) -> 
+      g & gamePlayers .~ ps                     -- remove the player
+        & gameFreeColors %~ (_playerCol p :)    -- free the player color
+
 loadBoard :: MisoString -> Game -> Maybe Game
 loadBoard str g =
   case parseBoard str of
@@ -71,5 +79,13 @@ playMove _ _ g = Just g
 -- internal
 -------------------------------------------------------------------------------
 
-
+-- TODO test
+extractPlayer :: MisoString -> [Player] -> Maybe (Player, [Player])
+extractPlayer name = go []
+  where
+    go _ [] = Nothing
+    go acc (p:ps) =
+      if _playerName p == name
+        then Just (p, acc++ps)
+        else go (acc++[p]) ps
 

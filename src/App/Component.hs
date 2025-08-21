@@ -107,7 +107,6 @@ updateModel (ActionWsRecv json) =
     UpdateBoard url -> do
       debug url 
       getText url [] ActionSetBoard ActionDebug
-      -- fetch url "GET" Nothing [] ActionSetBoard ActionDebug
 
 updateModel (ActionWsSend msg) = do
   socket <- use modelWs
