@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -54,12 +55,23 @@ data Move
   | MoveDown
   | MoveLeft
   | MoveRight
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Show, Generic, Uniform)
 
 instance ToJSON Move where
     toEncoding = genericToEncoding Aeson.defaultOptions
 
 instance FromJSON Move
+
+{-
+instance Uniform Move where
+  uniformM g = do
+    n <- uniformRM (1, 4) g
+    pure $ case n of
+      1 -> MoveUp
+      2 -> MoveUp
+      3 -> MoveUp
+      4 -> MoveUp
+-}
 
 -------------------------------------------------------------------------------
 -- Board

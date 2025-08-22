@@ -73,4 +73,17 @@ tryAddClient name conn wsVar = do
       writeTVar wsVar ws'
       pure $ Right name'
 
+tryAddBot
+  :: MisoString
+  -> TVar WsModel
+  -> STM (Either MisoString MisoString)
+tryAddBot name wsVar = do
+  let name' = strip name
+  ws <- readTVar wsVar
+  case tryAddPlayer name' (ws^.wsGame) of
+    Left err -> pure $ Left err
+    Right game -> do
+      let ws' = ws & wsGame .~ game
+      writeTVar wsVar ws'
+      pure $ Right name'
 

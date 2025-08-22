@@ -1,11 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Server.WsApp (wsApp) where
+module Server.WsApp (wsApp, runBot) where
 
+import Control.Concurrent (threadDelay)
 import Control.Concurrent.STM
 import Control.Exception (finally)
 import Control.Monad (forever, forM_, when)
-import Data.Aeson
+import Data.Aeson (decode, encode)
 import Data.ByteString.Lazy qualified as B
 import Data.Map qualified as M
 import Data.Text.Encoding qualified as T
@@ -15,6 +16,7 @@ import Miso.Lens
 import Network.Wai (Application)
 import Network.Wai.Handler.WebSockets (websocketsOr)
 import Network.WebSockets qualified as WS
+import System.Random.Stateful
 
 import Game.Common
 import Game.Game
@@ -125,4 +127,18 @@ serverApp ::TVar WsModel -> WS.PendingConnection -> IO ()
 serverApp wsVar pc = do
   conn <- WS.acceptRequest pc
   WS.withPingThread conn 30 (pure ()) (handleConnect wsVar conn)
+
+-------------------------------------------------------------------------------
+-- bot
+-------------------------------------------------------------------------------
+
+runBot :: TVar WsModel -> IO ()
+runBot wsVar = do
+  res <- atomically $ tryAddBot "random bot" wsVar
+  case res of
+    Left err -> T.putStrLn $ "failed to run bot: " <> err
+    Right name -> forever $ do
+      threadDelay 1_000_000
+      move <- uniformM globalStdGen
+      playClientMove wsVar name move
 

@@ -156,9 +156,9 @@ viewModel m@Model{..} =
               ]
             initCanvas
             (drawCanvas w h m)
-          , div_ [] [ "Player: ", text _modelName ]
           , div_ [] [ "Remaining meetings: ", text (ms $ show _modelRemMeetings) ]
           , div_ [] [ "Board: ", text _modelBoardName ]
+          , div_ [] [ "Player: ", text _modelName ]
           , div_ [] [ "Players:" ]
           , div_ [ CSS.style_ [ CSS.marginLeft "10px" ] ] (map fmtPlayer' _modelPlayers)
           ]
