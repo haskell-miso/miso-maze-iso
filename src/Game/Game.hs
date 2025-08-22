@@ -25,7 +25,7 @@ playerColors =
   ]
 
 nbMeetings :: Int
-nbMeetings = 4
+nbMeetings = 5
 
 -------------------------------------------------------------------------------
 -- types

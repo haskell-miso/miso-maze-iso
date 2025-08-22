@@ -100,7 +100,6 @@ updateModel (ActionWsOpen socket) = do
 
 updateModel (ActionWsClosed c) = do
   debug $ "updateModel ActionWsClosed: " <> ms (show c)
-  modelError .= "Connection closed."
   modelPlayers .= []
 
 updateModel (ActionWsError err) = do

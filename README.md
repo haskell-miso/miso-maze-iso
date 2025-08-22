@@ -3,6 +3,8 @@
 Isomorphic web app using [Miso](https://github.com/dmjio/miso) and WebSockets:
 move inside the maze and meet other players.
 
+![](miso-maze.gif)
+
 ## Build and run:
 
 ```
