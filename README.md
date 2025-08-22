@@ -13,7 +13,7 @@ cd output
 ./server
 ```
 
-then go to 127.0.0.1:3000
+then go to `127.0.0.1:3000` (`localhost:3000` won't work)
 
 ## Development
 
@@ -21,15 +21,16 @@ then go to 127.0.0.1:3000
 
 ```
 nix develop .#wasm
-make
+make update             # update package repository
+make build              # build frontend app
 ```
 
 - backend:
 
 ```
 nix develop .#default 
-cabal update            # update cabal
+cabal update            # update package repository
 cabal test              # build and run tests
-cabal run server        # build and run the server
+cabal run server        # build and run server
 ```
 
