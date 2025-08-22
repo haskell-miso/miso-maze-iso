@@ -8,6 +8,9 @@ import Data.IntSet qualified as IS
 import Miso
 import Miso.Canvas (Canvas, canvas)
 import Miso.Canvas qualified as Canvas 
+import Miso.Html.Element as H
+import Miso.Html.Event as E
+import Miso.Html.Property as P
 import Miso.Lens
 import Miso.CSS qualified as CSS
 import Miso.String (strip)
@@ -97,6 +100,7 @@ updateModel (ActionWsOpen socket) = do
 
 updateModel (ActionWsClosed c) = do
   debug $ "updateModel ActionWsClosed: " <> ms (show c)
+  modelError .= "Connection closed."
   modelPlayers .= []
 
 updateModel (ActionWsError err) = do
