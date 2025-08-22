@@ -8,7 +8,6 @@ import Control.Monad (forever, forM_, when)
 import Data.Aeson
 import Data.ByteString.Lazy qualified as B
 import Data.Map qualified as M
--- import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
 import Data.Text.IO qualified as T
 import Miso
@@ -38,15 +37,13 @@ broadcastPlayers wsVar = do
   (game, conns) <- atomically $ do
     ws <- readTVar wsVar
     pure (ws^.wsGame, ws^.wsClients&M.elems)
-  -- LOG T.putStrLn $ "broadcastPlayers to: " <> T.unwords (getPlayerNames game)
   forM_ conns $ flip sendMsg (UpdateInfos (_gameRemMeetings game) (getPlayers game))
 
 broadcastBoard :: TVar WsModel -> IO ()
 broadcastBoard wsVar = do
-  (currentBoard, conns, _names) <- atomically $ do
+  (currentBoard, conns) <- atomically $ do
     ws <- readTVar wsVar
-    pure (ws^.wsCurrentBoard, ws^.wsClients&M.elems, ws^.wsGame&getPlayerNames)
-  -- LOG T.putStrLn $ "broadcastBoard to: " <> T.unwords names
+    pure (ws^.wsCurrentBoard, ws^.wsClients&M.elems)
   let boardUrl = mkStaticUri currentBoard
   forM_ conns $ flip sendMsg (UpdateBoard boardUrl)
 
@@ -70,8 +67,6 @@ playClientMove wsVar name move = do
       broadcastBoard wsVar
 
     broadcastPlayers wsVar
-
-  -- LOG T.putStrLn $ name <> " plays " <> T.pack (show move)
 
 -------------------------------------------------------------------------------
 -- handlers
@@ -107,7 +102,6 @@ handleRun wsVar name conn = do
 
   -- get and send the current board
   boardUrl <- atomically (mkStaticUri . _wsCurrentBoard <$> readTVar wsVar)
-  -- LOG T.putStrLn $ "sending: " <> boardUrl
   sendMsg conn (UpdateBoard boardUrl)
 
   -- get and broadcast the player list

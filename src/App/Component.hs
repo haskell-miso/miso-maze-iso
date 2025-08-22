@@ -231,6 +231,6 @@ appComponent wsUrl = do
   let initialModel = mkModel wsUrl
   (component initialModel updateModel viewModel)
     { subs = [ keyboardSub ActionKey ]
-    , logLevel = DebugAll
+    -- , logLevel = DebugAll
     }
 
