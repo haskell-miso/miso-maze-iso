@@ -4,7 +4,6 @@
 module Game.GameSpec (spec) where
 
 import Data.Either
-import Data.Text qualified as T
 import Miso
 import Test.Hspec
 import System.Random
@@ -48,7 +47,7 @@ spec = do
 
   case loadBoard maze1String (mkGame gen) of
 
-    Left err -> mkFail $ "loadBoard maze1: " <> T.unpack err
+    Left err -> mkFail $ "loadBoard maze1: " <> show err
 
     Right game1 -> do
 

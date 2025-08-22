@@ -62,17 +62,6 @@ instance ToJSON Move where
 
 instance FromJSON Move
 
-{-
-instance Uniform Move where
-  uniformM g = do
-    n <- uniformRM (1, 4) g
-    pure $ case n of
-      1 -> MoveUp
-      2 -> MoveUp
-      3 -> MoveUp
-      4 -> MoveUp
--}
-
 -------------------------------------------------------------------------------
 -- Board
 -------------------------------------------------------------------------------
