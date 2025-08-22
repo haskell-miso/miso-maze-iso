@@ -27,14 +27,6 @@ data Position = Position
 
 makeLenses ''Position
 
-instance Num Position where
-  Position ia ja + Position ib jb = Position (ia+ib) (ja+jb)
-  Position ia ja * Position ib jb = Position (ia*ib) (ja*jb)
-  abs (Position i j) = Position (abs i) (abs j)
-  signum (Position i j) = Position (signum i) (signum j)
-  negate (Position i j) = Position (negate i) (negate j)
-  fromInteger n = Position (fromInteger n) (fromInteger n)
-
 instance UniformRange Position where
   uniformRM (Position i0 j0, Position i1 j1) g = 
     Position <$> uniformRM (i0, i1) g <*> uniformRM (j0, j1) g

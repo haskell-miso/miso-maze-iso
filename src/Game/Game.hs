@@ -12,8 +12,6 @@ import System.Random
 
 import Game.Common
 
--- TODO wrap edges
-
 -------------------------------------------------------------------------------
 -- params
 -------------------------------------------------------------------------------
@@ -125,13 +123,13 @@ getPlayerNames = M.keys . _gameInfoPlayer
 -------------------------------------------------------------------------------
 
 tryMove :: Board -> Position -> Position -> Maybe Position
-tryMove Board{..} ij0 dij =
-  if i1 >= 0 && i1 < ni && j1 >= 0 && j1 < nj && c == CellEmpty
-    then Just ij1
-    else Nothing
+tryMove Board{..} (Position i0 j0) (Position di dj) =
+  if c == CellEmpty then Just ij1 else Nothing
   where
     (ni, nj) = _boardNiNj
-    ij1@(Position i1 j1) = ij0 + dij
+    i1 = (i0 + di) `mod` ni
+    j1 = (j0 + dj) `mod` nj
+    ij1 = Position i1 j1
     c = _boardData V.! ij2k nj (i1, j1)
 
 isMeeting :: MisoString -> Position -> Game -> Bool
