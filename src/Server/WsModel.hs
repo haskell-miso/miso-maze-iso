@@ -14,6 +14,7 @@ import Miso.Lens.TH
 import Miso.String (strip)
 import Network.WebSockets qualified as WS
 import System.Directory (listDirectory)
+import System.Random (getStdGen)
 
 import Game.Game
 import Network.Api
@@ -33,7 +34,8 @@ mkWsModel mazeDir = do
       mazeDir' = mazeDir <> "/"
   mazeFiles <- map ((mazeDir'<>) . T.pack) . sort <$> listDirectory dir
   T.putStrLn $ "maze files: " <> T.unwords mazeFiles
-  let model0 = WsModel mkGame M.empty " " mazeFiles
+  gen <- getStdGen
+  let model0 = WsModel (mkGame gen) M.empty " " mazeFiles
   nextBoard model0
 
 nextBoard :: WsModel -> IO WsModel

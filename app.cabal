@@ -91,6 +91,7 @@ test-suite test
     containers,
     hspec,
     miso,
+    random,
     vector
   other-modules:
     Game.Common

@@ -8,6 +8,7 @@ import Data.Vector qualified as V
 import Miso hiding (go)
 import Miso.Lens
 import Miso.Lens.TH
+import System.Random
 
 import Game.Common
 
@@ -42,6 +43,7 @@ data Game = Game
   , _gameInfoPlayer :: M.Map MisoString InfoPlayer
   , _gameFreeColors :: [Int]
   , _gameRemMeetings :: Int
+  , _gameGen :: StdGen
   } deriving (Eq)
 
 makeLenses ''Game
@@ -50,8 +52,8 @@ makeLenses ''Game
 -- export
 -------------------------------------------------------------------------------
 
-mkGame :: Game
-mkGame = Game emptyBoard M.empty playerColors nbMeetings
+mkGame :: StdGen -> Game
+mkGame gen = Game emptyBoard M.empty playerColors nbMeetings gen
 
 tryAddPlayer :: MisoString -> Game -> Either MisoString Game
 tryAddPlayer name g@Game{..} =
@@ -70,7 +72,7 @@ deletePlayer name g@Game{..} =
   case M.lookup name _gameInfoPlayer of
     Nothing -> g
     Just info -> 
-      g & gameInfoPlayer %~ M.delete name          -- remove the player
+      g & gameInfoPlayer %~ M.delete name       -- remove the player
         & gameFreeColors %~ (_infoCol info :)   -- free the player color
 
 loadBoard :: MisoString -> Game -> Maybe Game

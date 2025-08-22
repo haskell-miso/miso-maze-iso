@@ -67,7 +67,7 @@ maze1Tokens' =
   ]
 
 maze1Board :: Board
-maze1Board = Board 8 10 $ V.fromList
+maze1Board = Board (8, 10) $ V.fromList
   [ CellWall, CellWall,  CellWall,  CellWall,  CellWall,  CellWall,  CellWall,  CellWall,  CellWall,  CellWall 
   , CellWall, CellEmpty, CellEmpty, CellEmpty, CellEmpty, CellEmpty, CellEmpty, CellEmpty, CellEmpty, CellWall 
   , CellWall, CellEmpty, CellEmpty, CellEmpty, CellEmpty, CellEmpty, CellEmpty, CellEmpty, CellEmpty, CellWall 
@@ -81,7 +81,7 @@ maze1Board = Board 8 10 $ V.fromList
 spec :: Spec
 spec = do
 
-  describe "lexer" $ do
+  describe "Common, lexer" $ do
     it "nb 8" $ fmap fst (runLexer lexerToken (mkStream "8")) `shouldBe` Right (TokNb 8)
     it "nb 10" $ fmap fst (runLexer lexerToken (mkStream "10")) `shouldBe` Right (TokNb 10)
     it "nb foobar" $ isLeft (runLexer lexerToken (mkStream "foobar"))
@@ -89,11 +89,11 @@ spec = do
     it "empty" $ fmap fst (runLexer lexerToken (mkStream ".")) `shouldBe` Right TokEmpty
     it "maze1" $ fmap fst (runLexer lexerTokens (mkStream maze1String)) `shouldBe` Right maze1Tokens
 
-  describe "parser" $ do
+  describe "Common, parser" $ do
     it "maze1 ok" $ parse parserBoard maze1Tokens `shouldBe` Right maze1Board
     it "maze1 ko" $ isLeft (parse parserBoard maze1Tokens')
 
-  describe "parseBoard" $ do
+  describe "Common, parseBoard" $ do
     it "maze1 ok" $ parseBoard maze1String `shouldBe` Just maze1Board
     it "maze1 ko" $ parseBoard maze1String' `shouldBe` Nothing
 
