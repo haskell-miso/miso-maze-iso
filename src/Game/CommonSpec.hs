@@ -94,6 +94,6 @@ spec = do
     it "maze1 ko" $ isLeft (parse parserBoard maze1Tokens')
 
   describe "Common, parseBoard" $ do
-    it "maze1 ok" $ parseBoard maze1String `shouldBe` Just maze1Board
-    it "maze1 ko" $ parseBoard maze1String' `shouldBe` Nothing
+    it "maze1 ok" $ parseBoard maze1String `shouldBe` Right maze1Board
+    it "maze1 ko" $ parseBoard maze1String' `shouldBe` Left "NoParses TokWall"
 

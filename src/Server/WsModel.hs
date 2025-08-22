@@ -47,10 +47,10 @@ nextBoard ws@WsModel{..} = do
     (f:fs) -> do
       str <- T.readFile $ T.unpack $ mkStaticUri f
       case loadBoard str _wsGame of
-        Nothing -> do
-          T.putStrLn $ "failed to read: " <> f
-          pure ws
-        Just game -> do
+        Left err -> do
+          T.putStrLn $ "failed to read " <> f <> ": " <> err
+          nextBoard $ ws & wsBoardFiles .~ fs   -- remove board file and try next 
+        Right game -> do
           let boardFile = ms f
           T.putStrLn $ "new board: " <> boardFile
           pure $ ws & wsBoardFiles .~ fs ++ [f]

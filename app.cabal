@@ -22,6 +22,7 @@ executable app
     jsaddle,
     miso,
     network-uri,
+    random,
     servant,
     text,
     vector
@@ -92,6 +93,7 @@ test-suite test
     hspec,
     miso,
     random,
+    text,
     vector
   other-modules:
     Game.Common

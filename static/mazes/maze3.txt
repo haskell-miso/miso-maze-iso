@@ -1,8 +1,8 @@
-10 31
+11 31
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 x.............................x
 x..xx...xx..x...xxxx...xxxx...x
-x..x.x.x.x..x..x......xx..xx..x
+x..x.x.x.x.....x......xx..xx..x
 x..x..x..x..x..x......x....x..x
 x..x.....x..x...xxx...x....x..x
 x..x.....x..x......x..x....x..x
@@ -10,4 +10,3 @@ x..x.....x..x......x..xx..xx..x
 x..x.....x..x..xxxx....xx.x...x
 x.............................x
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-

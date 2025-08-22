@@ -3,7 +3,8 @@
 
 module Game.GameSpec (spec) where
 
-import Data.Maybe
+import Data.Either
+import Data.Text qualified as T
 import Miso
 import Test.Hspec
 import System.Random
@@ -47,13 +48,13 @@ spec = do
 
   case loadBoard maze1String (mkGame gen) of
 
-    Nothing -> mkFail "loadBoard maze1"
+    Left err -> mkFail $ "loadBoard maze1: " <> T.unpack err
 
-    Just game1 -> do
+    Right game1 -> do
 
       describe "Game, loadBoard" $ do
-        it "ok" $ isJust (loadBoard maze1String (mkGame gen))
-        it "ko" $ isNothing (loadBoard maze1StringKo (mkGame gen))
+        it "ok" $ isRight (loadBoard maze1String (mkGame gen))
+        it "ko" $ loadBoard maze1StringKo (mkGame gen) `shouldBe` Left "NoParses TokWall"
 
       describe "Game, maze1" $ do
         it "isRunning" $ isRunning game1

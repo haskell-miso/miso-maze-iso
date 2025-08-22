@@ -12,6 +12,8 @@ import System.Random
 
 import Game.Common
 
+-- TODO wrap edges
+
 -------------------------------------------------------------------------------
 -- params
 -------------------------------------------------------------------------------
@@ -25,7 +27,7 @@ playerColors =
   ]
 
 nbMeetings :: Int
-nbMeetings = 10
+nbMeetings = 4
 
 -------------------------------------------------------------------------------
 -- types
@@ -34,17 +36,19 @@ nbMeetings = 10
 data InfoPlayer = InfoPlayer
   { _infoPos :: Position
   , _infoCol :: Int
-  } deriving (Eq)
+  } deriving (Eq, Show)
 
 makeLenses ''InfoPlayer
 
+type MapInfoPlayer = M.Map MisoString InfoPlayer
+
 data Game = Game
   { _gameBoard :: Board
-  , _gameInfoPlayer :: M.Map MisoString InfoPlayer
+  , _gameInfoPlayer :: MapInfoPlayer
   , _gameFreeColors :: [Int]
   , _gameRemMeetings :: Int
   , _gameGen :: StdGen
-  } deriving (Eq)
+  } deriving (Eq, Show)
 
 makeLenses ''Game
 
@@ -53,7 +57,7 @@ makeLenses ''Game
 -------------------------------------------------------------------------------
 
 mkGame :: StdGen -> Game
-mkGame gen = Game emptyBoard M.empty playerColors nbMeetings gen
+mkGame = Game emptyBoard M.empty playerColors nbMeetings
 
 tryAddPlayer :: MisoString -> Game -> Either MisoString Game
 tryAddPlayer name g@Game{..} =
@@ -64,8 +68,9 @@ tryAddPlayer name g@Game{..} =
         then Left $ name <> " is already in the maze"
         else Right $ g & gameFreeColors .~ cs
                        & gameInfoPlayer %~ M.insert name (InfoPlayer pos c)
+                       & gameGen .~ gen
   where
-    pos = Position 1 1  -- TODO random
+    (pos, gen) = genPosition _gameBoard _gameInfoPlayer _gameGen
 
 deletePlayer :: MisoString -> Game -> Game
 deletePlayer name g@Game{..} =
@@ -75,14 +80,12 @@ deletePlayer name g@Game{..} =
       g & gameInfoPlayer %~ M.delete name       -- remove the player
         & gameFreeColors %~ (_infoCol info :)   -- free the player color
 
-loadBoard :: MisoString -> Game -> Maybe Game
-loadBoard str g =
-  case parseBoard str of
-    Nothing -> Nothing
-    Just b -> Just $ g & gameBoard .~ b
-                       & gameRemMeetings .~ nbMeetings
-  -- TODO reset player positions randomly
-
+loadBoard :: MisoString -> Game -> Either MisoString Game
+loadBoard str g = toGame <$> parseBoard str
+  where
+    toGame b = g & gameBoard .~ b
+                 & gameRemMeetings .~ nbMeetings
+                 & resetPositions
 
 playMove :: MisoString -> Move -> Game -> Maybe Game
 playMove name move g =
@@ -103,7 +106,7 @@ playMove name move g =
         Just ij1 ->
           if isMeeting name ij1 g
             then Just $ g & gameRemMeetings %~ subtract 1
-              -- TODO reset player positions
+                          & resetPositions
             else Just $ g & gameInfoPlayer %~ M.adjust (\i -> i & infoPos .~ ij1) name
 
 isRunning :: Game -> Bool
@@ -135,4 +138,26 @@ isMeeting :: MisoString -> Position -> Game -> Bool
 isMeeting name ij1 Game{..} = M.foldrWithKey' f False _gameInfoPlayer
   where
     f n (InfoPlayer ij _) acc = acc || n/=name && ij==ij1
+
+-- generate a free random position, using rejection sampling
+genPosition :: Board -> MapInfoPlayer -> StdGen -> (Position, StdGen)
+genPosition Board{..} infos = go 
+  where
+    (ni, nj) = _boardNiNj
+    playerPositions = M.foldl' (\acc i -> _infoPos i : acc) [] infos
+    go gen = 
+      let (pos, gen') = uniformR (Position 0 0, Position (ni-1) (nj-1)) gen
+      in if _boardData V.! pos2k nj pos == CellEmpty && notElem pos playerPositions
+        then (pos, gen')
+        else go gen'
+
+resetPositions :: Game -> Game
+resetPositions g@Game{..} =
+  g & gameInfoPlayer .~ infos1
+    & gameGen .~ gen1
+  where
+    fAcc (infos, gen) n i = 
+      let (pos, gen') = genPosition _gameBoard infos gen
+      in (M.insert n (i & infoPos .~ pos) infos, gen')
+    (infos1, gen1) = M.foldlWithKey' fAcc (M.empty, _gameGen) _gameInfoPlayer
 

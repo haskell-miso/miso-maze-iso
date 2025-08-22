@@ -88,8 +88,8 @@ updateModel ActionConnect = do
 
 updateModel (ActionSetBoard url str) =
   case parseBoard str of
-    Nothing -> modelError .= "Error: failed to parse board."
-    Just board -> do
+    Left err -> modelError .= "Failed to parse board: " <> err
+    Right board -> do
       modelBoard .= board
       modelBoardName .= url
 

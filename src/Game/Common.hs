@@ -14,6 +14,7 @@ import Miso.Lens
 import Miso.Lens.TH
 import Miso.Util.Lexer as L
 import Miso.Util.Parser as P
+import System.Random.Stateful
 
 -------------------------------------------------------------------------------
 -- basic types
@@ -33,6 +34,10 @@ instance Num Position where
   signum (Position i j) = Position (signum i) (signum j)
   negate (Position i j) = Position (negate i) (negate j)
   fromInteger n = Position (fromInteger n) (fromInteger n)
+
+instance UniformRange Position where
+  uniformRM (Position i0 j0, Position i1 j1) g = 
+    Position <$> uniformRM (i0, i1) g <*> uniformRM (j0, j1) g
 
 instance ToJSON Position where
     toEncoding = genericToEncoding Aeson.defaultOptions
@@ -88,6 +93,9 @@ forBoard Board{..} f =
   V.iforM_ _boardData $ \k c -> 
     let (i, j) = k2ij (snd _boardNiNj) k
     in f i j c
+
+pos2k :: Int -> Position -> Int
+pos2k nj (Position i j) = i*nj + j
 
 ij2k :: Int -> (Int, Int) -> Int
 ij2k nj (i, j) = i*nj + j
@@ -150,9 +158,12 @@ parserBoard = do
 
     parseCells = V.fromList <$> some (parseWall <|> parseEmpty)
 
-parseBoard :: MisoString -> Maybe Board
+parseBoard :: MisoString -> Either MisoString Board
 parseBoard str = 
   case runLexer lexerTokens (mkStream str) of
-    Left _ -> Nothing
-    Right (tokens, _) -> either (const Nothing) Just $ parse parserBoard tokens
+    Left err -> Left (ms $ show err)
+    Right (tokens, _) ->
+      case parse parserBoard tokens of
+        Left err -> Left (ms $ show err)
+        Right b -> Right b
 

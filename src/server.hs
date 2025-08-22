@@ -11,6 +11,8 @@ import Server.WsModel
 import Server.ServerApp
 import Server.WsApp
 
+-- TODO random bot
+
 main :: IO ()
 main = do
   port <- read . fromMaybe "3000" <$> lookupEnv "PORT"
