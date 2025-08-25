@@ -34,3 +34,8 @@ cabal test              # build and run tests
 cabal run server        # build and run server
 ```
 
+## See also
+
+The client/server version:
+[miso-maze](https://github.com/juliendehos/miso-maze).
+
